@@ -1,0 +1,8 @@
+*** Changelog ***
+
+2026-04-20 - version 3.1.0
+* Dev - Refactored plugin structure with namespaced `ArtsPay\*` classes and PSR-4-style autoloading under `includes/`.
+* Remove - Removed unused hosted payment page (HPP); card payments are inline checkout or Direct Post only.
+* Dev - Frontend: consolidated `window.ArtsPay` configuration (`artsPayLocalized` and captcha settings); split JavaScript into `artspay-core`, `artspay-checkout-autofill`, `artspay-googlepay`, and `artspay-captcha`.
+* Dev - Express checkout PHP moved to `includes/Express/` (Google Pay handler and Cart/Checkout block footer mounts); removed legacy standalone `GooglePayGateway.php`.
+* Update - Google Pay / Apple Pay express checkout UI and storefront hooks are disabled in this release; wallet flows are planned to return in 3.1.1 (see `docs/PLAN-3.1.1-wallets.md`).

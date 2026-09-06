@@ -1,0 +1,386 @@
+/**
+ * ArtsPay payment gateway settings — Stripe-style split layout (WooCommerce admin).
+ */
+
+.artspay-gateway-settings {
+	max-width: 1200px;
+}
+
+.artspay-gateway-settings__lead {
+	margin: 0 0 1.5rem;
+	font-size: 14px;
+	line-height: 1.6;
+	color: #50575e;
+}
+
+.artspay-gateway-settings__section {
+	display: grid;
+	grid-template-columns: minmax(200px, 280px) minmax(0, 1fr);
+	gap: 24px 40px;
+	align-items: start;
+	margin-top: 2.5rem;
+	margin-bottom: 2.5rem;
+	padding-bottom: 2rem;
+	border-bottom: 1px solid #dcdcde;
+}
+
+.artspay-gateway-settings__section:last-child {
+	margin-bottom: 0;
+	padding-bottom: 0;
+	border-bottom: none;
+}
+
+.artspay-gateway-settings__aside {
+	padding-right: 0.5rem;
+}
+
+.artspay-gateway-settings__heading {
+	margin: 0 0 0.5rem;
+	font-size: 16px;
+	font-weight: 600;
+	line-height: 1.35;
+	color: #1d2327;
+}
+
+.artspay-gateway-settings__description {
+	margin: 0 0 1rem;
+	font-size: 13px;
+	line-height: 1.55;
+	color: #646970;
+}
+
+.artspay-gateway-settings__links {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.artspay-gateway-settings__links li {
+	margin: 0 0 0.5rem;
+}
+
+.artspay-gateway-settings__link {
+	font-size: 13px;
+	text-decoration: none;
+}
+
+.artspay-gateway-settings__link:hover,
+.artspay-gateway-settings__link:focus {
+	text-decoration: underline;
+}
+
+.artspay-gateway-settings__link-icon::after {
+	content: "↗";
+	display: inline-block;
+	margin-left: 0.2em;
+	font-size: 0.95em;
+	opacity: 0.75;
+	text-decoration: none;
+}
+
+.artspay-gateway-settings__card {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 8px;
+	padding: 4px 20px 12px;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.artspay-gateway-settings__card .form-table {
+	margin: 0;
+}
+
+.artspay-gateway-settings__card .form-table th {
+	padding-left: 0;
+	width: 200px;
+	font-weight: 500;
+}
+
+.artspay-gateway-settings__card .form-table td {
+	padding-right: 0;
+}
+
+.artspay-gateway-settings__card .form-table tr:first-child th,
+.artspay-gateway-settings__card .form-table tr:first-child td {
+	padding-top: 16px;
+}
+
+@media screen and (max-width: 782px) {
+	.artspay-gateway-settings__section {
+		grid-template-columns: 1fr;
+		gap: 16px;
+	}
+
+	.artspay-gateway-settings__aside {
+		padding-right: 0;
+	}
+}
+
+/* Express checkout list (Stripe-style) */
+.artspay-express-settings {
+	display: flex;
+	flex-direction: column;
+	gap: 26px;
+	padding: 20px 0;
+}
+
+.artspay-express-settings__row {
+	display: flex;
+	justify-content: space-between;
+	gap: 16px;
+	align-items: center;
+}
+
+.artspay-express-settings__left {
+	display: flex;
+	align-items: center;
+	gap: 20px;
+	min-width: 0;
+}
+
+.artspay-express-settings__text {
+	min-width: 0;
+}
+
+.artspay-express-settings__label {
+	font-weight: 600;
+	color: #1d2327;
+	margin-bottom: 2px;
+}
+
+.artspay-express-settings__meta {
+	font-size: 12px;
+	color: #646970;
+}
+
+.artspay-express-settings__right {
+	display: inline-flex;
+	align-items: center;
+	gap: 12px;
+	flex-shrink: 0;
+}
+
+.artspay-express-settings__toggle {
+	display: inline-flex;
+	align-items: center;
+}
+
+.artspay-express-settings__toggle input[type="checkbox"] {
+	margin: 0;
+}
+
+.artspay-express-settings__wallet-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	border: 1px solid #dcdcde;
+	border-radius: 10px;
+	background: #fff;
+	flex-shrink: 0;
+	overflow: hidden;
+}
+
+.artspay-express-settings__wallet-icon img {
+	width: auto;
+	height: 22px;
+	display: block;
+}
+
+.artspay-express-settings__wallet-icon--placeholder {
+	font-size: 18px;
+	line-height: 1;
+	color: #111827;
+}
+
+/* Google Pay settings — non-interactive preview */
+.artspay-gpay-preview {
+	margin-top: 1.5rem;
+	padding-top: 1.5rem;
+	border-top: 1px solid #dcdcde;
+}
+
+.artspay-gpay-preview__heading {
+	margin: 0 0 0.25rem;
+	font-size: 14px;
+	font-weight: 600;
+	color: #1d2327;
+}
+
+.artspay-gpay-preview__sub {
+	margin: 0 0 0.5rem;
+	font-size: 13px;
+	font-weight: 600;
+	color: #50575e;
+}
+
+.artspay-gpay-preview__description {
+	margin: 0 0 1rem;
+	font-size: 13px;
+	line-height: 1.5;
+	color: #646970;
+}
+
+.artspay-gpay-preview__mount {
+	line-height: 1.4;
+	min-height: 48px;
+	max-width: 320px;
+	margin: 1.25rem 0;
+}
+
+.artspay-gpay-preview__placeholder {
+	display: flex;
+	align-items: center;
+	min-height: 48px;
+	margin: 0;
+	padding: 10px 14px;
+	font-size: 13px;
+	line-height: 1.45;
+	color: #646970;
+	border: 1px dashed #c3c4c7;
+	border-radius: 4px;
+	background: #f6f7f7;
+	box-sizing: border-box;
+}
+
+.artspay-gpay-preview__mount:has(.gpay-button) {
+	line-height: 0;
+}
+
+.artspay-gpay-preview__mount .gpay-button,
+.artspay-gpay-preview__mount .gpay-button iframe {
+	width: 100% !important;
+	min-height: 48px !important;
+	height: 48px !important;
+}
+
+.artspay-gpay-preview__mount[hidden] {
+	display: none !important;
+}
+
+/*
+ * <apple-pay-button> sizing uses Apple’s custom properties (not only host height).
+ * @see https://developer.apple.com/documentation/applepayontheweb/displaying-apple-pay-buttons-using-javascript
+ * Default height is 30px if --apple-pay-button-height is omitted — set 48px to align with Google Pay preview.
+ */
+.artspay-gpay-preview__mount apple-pay-button,
+.artspay-applepay-preview__mount apple-pay-button {
+	--apple-pay-button-width: 100%;
+	--apple-pay-button-height: 48px;
+	--apple-pay-button-border-radius: 4px;
+	display: block;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.artspay-gpay-preview__mount:has(apple-pay-button) {
+	line-height: 0;
+}
+
+/* Express checkouts detail page (stacked sections) */
+.artspay-express-checkouts-page__back {
+	margin: 0 0 0.5rem;
+}
+
+.artspay-express-checkouts-page > .artspay-gateway-settings__section--express:first-of-type {
+	margin-top: 0;
+	padding-top: 0;
+}
+
+/* Express checkouts — dual preview row (fixed 320px columns for matching size) */
+.artspay-express-previews-block {
+	margin-top: 1.25rem;
+	padding-top: 0;
+	border-top: 0;
+}
+
+.artspay-express-previews {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1.5rem 2rem;
+	align-items: flex-start;
+}
+
+.artspay-express-previews__col {
+	flex: 0 0 320px;
+	width: 320px;
+	max-width: 320px;
+	min-width: 0;
+}
+
+.artspay-express-previews__label {
+	display: block;
+	font-size: 12px;
+	font-weight: 600;
+	color: #50575e;
+	margin-bottom: 0.35rem;
+}
+
+.artspay-express-previews-block .artspay-gpay-preview__mount {
+	width: 100%;
+	max-width: 320px;
+	min-height: 48px;
+	margin: 0.5rem 0 0;
+	box-sizing: border-box;
+}
+
+.artspay-express-previews-block .artspay-gpay-preview__mount .gpay-button {
+	max-width: 320px;
+	box-sizing: border-box;
+}
+
+.artspay-express-settings__hr {
+	margin: 1.5rem 0;
+	border: 0;
+	border-top: 1px solid #dcdcde;
+}
+
+.artspay-express-settings__row--summary .artspay-express-settings__wallet-icon + .artspay-express-settings__wallet-icon {
+	margin-left: 4px;
+}
+
+/* Apple Pay settings — non-interactive preview */
+.artspay-applepay-preview {
+	margin-top: 1.5rem;
+	padding-top: 1.5rem;
+	border-top: 1px solid #dcdcde;
+}
+
+.artspay-applepay-preview__heading {
+	margin: 0 0 0.25rem;
+	font-size: 14px;
+	font-weight: 600;
+	color: #1d2327;
+}
+
+.artspay-applepay-preview__mount {
+	line-height: 1.4;
+	min-height: 48px;
+	max-width: 320px;
+	margin: 1.25rem 0;
+}
+
+.artspay-applepay-preview__placeholder {
+	display: flex;
+	align-items: center;
+	min-height: 48px;
+	margin: 0;
+	padding: 10px 14px;
+	font-size: 13px;
+	line-height: 1.45;
+	color: #646970;
+	border: 1px dashed #c3c4c7;
+	border-radius: 4px;
+	background: #f6f7f7;
+	box-sizing: border-box;
+}
+
+.artspay-applepay-preview__mount:has(apple-pay-button) {
+	line-height: 0;
+}
+
+.artspay-applepay-preview__mount[hidden] {
+	display: none !important;
+}
+

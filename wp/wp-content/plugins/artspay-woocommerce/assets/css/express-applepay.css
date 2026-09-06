@@ -1,0 +1,51 @@
+.artspay-express-applepay-mount {
+  display: block;
+  max-width: 320px;
+  min-height: 48px;
+}
+
+/* Native Apple Pay on the Web button (requires apple-pay-js-sdk). */
+apple-pay-button {
+  --apple-pay-button-width: 100%;
+  /* Match Google Pay express row (48px); default Apple height is 30px without this variable. */
+  --apple-pay-button-height: 48px;
+  --apple-pay-button-border-radius: 4px;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+/* Fallback when <apple-pay-button> is not available yet. */
+.artspay-applepay-button--fallback {
+  width: 100%;
+  min-height: 48px;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.artspay-applepay-button--fallback .artspay-applepay-button__label {
+  line-height: 1.2;
+}
+
+.artspay-applepay-button--fallback::before {
+  content: '';
+  display: inline-block;
+  width: 36px;
+  height: 18px;
+  flex-shrink: 0;
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+  filter: invert(1);
+  background-image: url("../images/apple-logo.png");
+}

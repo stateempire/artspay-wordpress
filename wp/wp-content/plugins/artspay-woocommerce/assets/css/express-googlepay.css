@@ -1,0 +1,71 @@
+/**
+ * ArtsPay — Google Pay express placement (cart + classic checkout).
+ */
+
+.artspay-express-checkout {
+	margin: 0 0 1.5rem;
+}
+
+.artspay-express-checkout__buttons {
+	display: flex;
+	flex-wrap: nowrap;
+	gap: 0.75rem;
+	align-items: center;
+	justify-content: center;
+	margin-bottom: 1.25rem;
+}
+
+.artspay-express-checkout__buttons > div {
+	line-height: 0;
+	flex: 1;
+	min-width: 0;
+	max-width: 320px;
+	min-height: 48px;
+}
+
+.artspay-express-checkout__buttons > button {
+	width: 100% !important;
+}
+
+/* Stripe-style “OR” between express and classic checkout */
+.artspay-express-divider {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	margin: 1.75rem 0;
+	color: currentColor;
+	font-size: 1.25rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	opacity: 0.75;
+}
+
+/* Cart totals column: stack like Stripe reference */
+.woocommerce-cart .artspay-express-checkout--cart {
+	margin-top: 1rem;
+}
+
+@media screen and (max-width: 560px) {
+	.artspay-express-checkout__buttons {
+		flex-wrap: wrap;
+	}
+}
+
+/* Google Pay button sizing (Google injects `.gpay-button`). */
+.artspay-express-checkout__buttons .gpay-button {
+	width: 100% !important;
+	min-height: 48px;
+	height: 48px;
+}
+
+.artspay-express-checkout__buttons .gpay-button iframe,
+.artspay-express-checkout__buttons .gpay-button > iframe {
+	min-height: 48px;
+	height: 48px;
+}
+
+.artspay-googlepay-postauth {
+	margin-top: 0.75rem;
+}
+
