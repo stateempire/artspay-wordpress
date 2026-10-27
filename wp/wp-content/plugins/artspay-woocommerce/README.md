@@ -9,7 +9,7 @@ Official ArtsPay payment integration for WooCommerce: accept cards via the Fat Z
 ## Requirements
 
 - **WordPress** 6.0 or higher (see plugin header for the authoritative minimum).
-- **WooCommerce** (required).
+- **WooCommerce** (required), using the classic (shortcode) checkout. The block-based Checkout is not supported yet: switch the Checkout block to classic checkout.
 - **PHP** 8.0 or higher. We recommend PHP 8.3 or later, kept on the latest patch release: PHP 8.0 and 8.1 no longer receive security fixes, and 8.2's end on 31 December 2026.
 - **WooCommerce Subscriptions** (optional; required only for subscription features).
 
@@ -69,7 +69,7 @@ Optional reCAPTCHA v3 or Cloudflare Turnstile challenge before payment submit.
 |------|-----------|
 | **Inline (server)** | Default. Card fields post to your server; the plugin calls Fat Zebra `purchases` API. |
 | **Direct Post** | Browser tokenizes via Fat Zebra; the plugin charges with `card_token`. Requires shared secret and Direct Post JS. |
-| **Google Pay (wallet)** | When enabled (planned restoration in 3.1.1), token in `#googlepay-token`; server uses the wallet purchase API. Not active in 3.1.0. |
+| **Google Pay / Apple Pay (wallets)** | When enabled, express buttons appear on the cart and checkout. The wallet token is charged through Fat Zebra's wallet purchase API. |
 
 ## Testing (sandbox)
 

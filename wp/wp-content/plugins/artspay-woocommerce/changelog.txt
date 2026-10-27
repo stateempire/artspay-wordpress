@@ -1,5 +1,18 @@
 *** Changelog ***
 
+2026-10-27 - version 3.1.2
+* Fix - Cardholder names with an apostrophe (for example O'Brien) were sent to Fat Zebra with a stray backslash.
+* Fix - PHP warnings when a checkout used the alternative card field names.
+* Fix - Card number and CVV are reduced to digits before they are sent to Fat Zebra.
+* Security - The fallback customer IP now comes from WooCommerce's own lookup and is validated, instead of trusting the X-Forwarded-For header as sent.
+* Update - PHP 8.3 or later is now recommended. PHP 8.0 remains the minimum.
+* Dev - CI checks syntax on PHP 8.0, 8.3 and 8.5, and the WordPress security sniffs now fail the build on any finding.
+* Note - ArtsPay currently requires the classic (shortcode) checkout. Support for the block-based Checkout is planned.
+
+2026-07-29 - version 3.1.1
+* Add - Apple Pay on the web as an express checkout on the cart and checkout, with domain registration from the gateway settings and the Apple domain association file served from `/.well-known/`.
+* Update - Google Pay express checkout re-enabled.
+
 2026-04-20 - version 3.1.0
 * Dev - Refactored plugin structure with namespaced `ArtsPay\*` classes and PSR-4-style autoloading under `includes/`.
 * Remove - Removed unused hosted payment page (HPP); card payments are inline checkout or Direct Post only.

@@ -2,10 +2,10 @@
 Contributors: artspayintegration
 Tags: woocommerce, payment gateway, credit card, fat zebra, subscriptions
 Requires at least: 6.0
-Tested up to: [TODO: scamped, to add when deploying - unpublished]
+Tested up to: 7.0
 Requires PHP: 8.0
 Requires Plugins: woocommerce
-Stable tag: 3.1.1
+Stable tag: 3.1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -23,6 +23,8 @@ WooCommerce ArtsPay Gateway connects your WooCommerce store to **ArtsPay** / **F
 * Optional captcha (reCAPTCHA v3 or Cloudflare Turnstile) before payment submission.
 * Deferred payments — tokenize and hold an order for manual capture later.
 * WooCommerce Subscriptions support.
+
+**Checkout:** ArtsPay currently works with the classic (shortcode) checkout. If your Checkout page uses the Checkout block, edit the page, select the block and choose "Switch to classic checkout". Block checkout support is planned.
 
 **PHP:** the plugin runs on PHP 8.0 or later, but we recommend PHP 8.3 or later, kept on the latest patch release. Older PHP versions no longer receive security fixes.
 
@@ -58,8 +60,18 @@ Wallet/express checkout support exists in the codebase but its enabled/disabled 
 
 == Changelog ==
 
+= 3.1.2 =
+* Fix - Cardholder names with an apostrophe (for example O'Brien) were sent to Fat Zebra with a stray backslash.
+* Fix - PHP warnings when a checkout used the alternative card field names.
+* Fix - Card number and CVV are reduced to digits before they are sent to Fat Zebra.
+* Security - The fallback customer IP now comes from WooCommerce's own lookup and is validated, instead of trusting the X-Forwarded-For header as sent.
+* Update - PHP 8.3 or later is now recommended. PHP 8.0 remains the minimum.
+* Dev - CI checks syntax on PHP 8.0, 8.3 and 8.5, and the WordPress security sniffs now fail the build on any finding.
+* Note - ArtsPay currently requires the classic (shortcode) checkout. Support for the block-based Checkout is planned.
+
 = 3.1.1 =
-[TODO: scamped, to add when deploying]
+* Add - Apple Pay on the web as an express checkout on the cart and checkout, with domain registration from the gateway settings and the Apple domain association file served from `/.well-known/`.
+* Update - Google Pay express checkout re-enabled.
 
 = 3.1.0 =
 * Dev - Refactored plugin structure with namespaced `ArtsPay\*` classes and PSR-4-style autoloading under `includes/`.
@@ -70,5 +82,5 @@ Wallet/express checkout support exists in the codebase but its enabled/disabled 
 
 == Upgrade Notice ==
 
-= 3.1.1 =
-[TODO: scamped, to add when deploying]
+= 3.1.2 =
+Fixes cardholder names with apostrophes and tightens checkout input handling. Recommended for all stores.

@@ -3,7 +3,7 @@
  * Plugin Name:       WooCommerce ArtsPay Gateway
  * Plugin URI:        https://artspay.com
  * Description:       Combine your current WordPress Woo Commerce installation with ArtsPay for a payments solution that gives back to the arts. Supports WooCommerce Subscriptions.
- * Version:           3.1.1
+ * Version:           3.1.2
  * Requires at least: 6.0
  * Requires PHP:      8.0
  * Requires Plugins:  woocommerce
@@ -24,7 +24,7 @@ if ( ! defined( 'WPINC' ) ) {
 define( 'ARTSPAY_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'ARTSPAY_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
-const ARTSPAY_PLUGIN_VERSION = '3.1.1';
+const ARTSPAY_PLUGIN_VERSION = '3.1.2';
 const ARTSPAY_PLUGIN_FILE    = __FILE__;
 
 spl_autoload_register(
