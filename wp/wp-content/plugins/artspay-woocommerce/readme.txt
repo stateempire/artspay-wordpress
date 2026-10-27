@@ -24,6 +24,8 @@ WooCommerce ArtsPay Gateway connects your WooCommerce store to **ArtsPay** / **F
 * Deferred payments — tokenize and hold an order for manual capture later.
 * WooCommerce Subscriptions support.
 
+**PHP:** the plugin runs on PHP 8.0 or later, but we recommend PHP 8.3 or later, kept on the latest patch release. Older PHP versions no longer receive security fixes.
+
 See [FRAUD.md](FRAUD.md) in the repository for full detail on fraud screening behaviour, and note that 3-D Secure (3DS) is **not** implemented in this plugin.
 
 == Installation ==

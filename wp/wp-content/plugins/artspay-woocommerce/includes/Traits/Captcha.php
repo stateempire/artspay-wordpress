@@ -168,7 +168,7 @@ trait Captcha {
 
 		// Add remote IP if available.
 		if ( ! empty( $_SERVER['REMOTE_ADDR'] ) ) {
-			$data['remoteip'] = wp_unslash( $_SERVER['REMOTE_ADDR'] );
+			$data['remoteip'] = sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) );
 		}
 
 		// Make API request.

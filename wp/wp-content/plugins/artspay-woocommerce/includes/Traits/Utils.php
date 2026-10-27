@@ -24,14 +24,16 @@ trait Utils {
 	 * @return string
 	 */
 	public function get_customer_real_ip(): string {
-		$customer_ip = $_SERVER['REMOTE_ADDR'];
-
-		if ( isset( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
-			$forwarded_ips = explode( ', ', $_SERVER['HTTP_X_FORWARDED_FOR'] );
-			$customer_ip   = $forwarded_ips[0];
+		// Use WooCommerce's lookup, the same one it uses to record the IP on each order,
+		// so the fallback never disagrees with the order. Previously the first
+		// X-Forwarded-For entry was trusted as-is, which a client can set to anything.
+		if ( class_exists( 'WC_Geolocation' ) ) {
+			$customer_ip = (string) \WC_Geolocation::get_ip_address();
+		} else {
+			$customer_ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
 		}
 
-		return $customer_ip;
+		return false !== filter_var( $customer_ip, FILTER_VALIDATE_IP ) ? $customer_ip : '';
 	}
 
 	/**

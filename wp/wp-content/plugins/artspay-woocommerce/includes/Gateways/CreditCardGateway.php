@@ -812,10 +812,11 @@ class CreditCardGateway extends WC_Payment_Gateway_CC {
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$express_page = isset( $_GET['artspay_express'] ) ? sanitize_key( (string) wp_unslash( $_GET['artspay_express'] ) ) : '';
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WC gateway settings POST.
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- WC gateway settings POST, nonce checked by WooCommerce.
 		if ( isset( $_POST['artspay_express_save_context'] ) ) {
 			$express_page = sanitize_key( (string) wp_unslash( $_POST['artspay_express_save_context'] ) );
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 		if ( in_array( $express_page, array( 'google_pay', 'apple_pay' ), true ) ) {
 			$express_page = 'express_checkouts';
 		}
@@ -941,11 +942,11 @@ class CreditCardGateway extends WC_Payment_Gateway_CC {
 		echo '<div class="artspay-gateway-settings">';
 		echo '<h2 class="wc-admin-header">';
 		echo '  <small>';
-		echo '    <a class="" href="' . esc_url( $header_back_url ) . '" aria-label="' . $header_back_label . '">';
+		echo '    <a class="" href="' . esc_url( $header_back_url ) . '" aria-label="' . $header_back_label . '">'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above with esc_attr__().
 		echo '      <span aria-hidden="true">&larr;</span> ';
 		echo '    </a>';
 		echo '  </small>';
-		echo $header_title;
+		echo $header_title; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above with esc_html__().
 		echo '</h2>';
 
 		if ( $this->is_sandbox_mode() ) {
@@ -972,7 +973,7 @@ class CreditCardGateway extends WC_Payment_Gateway_CC {
 
 		foreach ( $this->get_gateway_settings_sections() as $section_key => $section ) {
 			$section_id_attr = ( 'express' === (string) $section_key ) ? ' id="artspay-express-checkouts"' : '';
-			echo '<div class="artspay-gateway-settings__section"' . $section_id_attr . '>';
+			echo '<div class="artspay-gateway-settings__section"' . $section_id_attr . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Fixed attribute string.
 			echo '<div class="artspay-gateway-settings__aside">';
 			echo '<h2 class="artspay-gateway-settings__heading">' . esc_html( $section['title'] ) . '</h2>';
 			echo '<p class="artspay-gateway-settings__description">' . esc_html( $section['description'] ) . '</p>';
@@ -1362,29 +1363,28 @@ class CreditCardGateway extends WC_Payment_Gateway_CC {
 				// Fat Zebra distinguishes Apple Pay in-app ('APPLE') vs Apple Pay on the Web ('APPLEPAYWEB').
 				$result = $this->do_wallet_payment( $this->params, 'APPLEPAYWEB' );
 			} else {
+			// WooCommerce verifies the checkout nonce before calling process_payment().
+			// phpcs:disable WordPress.Security.NonceVerification.Missing
 			if ( $this->direct_post_enabled() ) {
-				$this->params['card_token'] = $_POST['fatzebra-token'];
+				$this->params['card_token'] = $this->posted_field( 'fatzebra-token' );
 			} else {
-				$this->params['card_number'] = str_replace( ' ', '', $_POST['fatzebra-card-number'] );
-				if ( ! isset( $_POST['fatzebra-card-number'] ) ) {
-					$this->params['card_number'] = $_POST['cardnumber'];
-				}
+				// Card fields: digits only, so spaces and stray characters never reach Fat Zebra.
+				$card_number = $this->posted_field( 'fatzebra-card-number', 'cardnumber' );
+				$this->params['card_number'] = preg_replace( '/\D/', '', $card_number );
+				$this->params['cvv']         = preg_replace( '/\D/', '', $this->posted_field( 'fatzebra-card-cvc', 'card_cvv' ) );
 
-				$this->params['cvv'] = $_POST['fatzebra-card-cvc'];
-				if ( ! isset( $_POST['fatzebra-card-cvc'] ) ) {
-					$this->params['cvv'] = $_POST['card_cvv'];
-				}
-
-				if ( isset( $_POST['fatzebra-card-expiry'] ) && ! empty( $_POST['fatzebra-card-expiry'] ) ) {
-					list($exp_month, $exp_year) = explode( '/', $_POST['fatzebra-card-expiry'] );
+				$expiry = $this->posted_field( 'fatzebra-card-expiry' );
+				if ( '' !== $expiry && str_contains( $expiry, '/' ) ) {
+					list( $exp_month, $exp_year ) = array_map( 'trim', explode( '/', $expiry, 2 ) );
 				} else {
-					$exp_month = $_POST['card_expiry_month'];
-					$exp_year  = $_POST['card_expiry_year'];
+					$exp_month = $this->posted_field( 'card_expiry_month' );
+					$exp_year  = $this->posted_field( 'card_expiry_year' );
 				}
-				$this->params['card_expiry'] = trim( $exp_month ) . '/' . ( 2000 + intval( $exp_year ) );
+				$this->params['card_expiry'] = $exp_month . '/' . ( 2000 + intval( $exp_year ) );
 
-				$this->params['card_holder'] = $_POST['billing_first_name'] . ' ' . $_POST['billing_last_name'];
+				$this->params['card_holder'] = trim( $this->posted_field( 'billing_first_name' ) . ' ' . $this->posted_field( 'billing_last_name' ) );
 			}
+			// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 			$defer_payment = $this->settings['deferred_payments'];
 
@@ -1844,6 +1844,29 @@ class CreditCardGateway extends WC_Payment_Gateway_CC {
 			'service'     => 'woocommerce',
 			'order_link'  => $order_link,
 		);
+	}
+
+	/**
+	 * Read a posted checkout field as an unslashed, sanitized string.
+	 *
+	 * WordPress adds slashes to $_POST, so without wp_unslash() a cardholder
+	 * named O'Brien would reach Fat Zebra as O\'Brien.
+	 *
+	 * @param string $key      Field name.
+	 * @param string $fallback Alternative field name used by older checkout forms.
+	 *
+	 * @return string Empty string when neither field is present.
+	 */
+	private function posted_field( string $key, string $fallback = '' ): string {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Checkout nonce is verified by WooCommerce.
+		if ( isset( $_POST[ $key ] ) ) {
+			return sanitize_text_field( wp_unslash( (string) $_POST[ $key ] ) );
+		}
+		if ( '' !== $fallback && isset( $_POST[ $fallback ] ) ) {
+			return sanitize_text_field( wp_unslash( (string) $_POST[ $fallback ] ) );
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+		return '';
 	}
 
 	/**

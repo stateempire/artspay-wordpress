@@ -68,7 +68,7 @@ final class GooglePay {
 		$wrap_variant = str_contains( $context, 'cart' ) ? 'cart' : 'checkout';
 		$wrap_extra   = $is_blocks ? ' artspay-express-checkout--blocks' : '';
 
-		echo '<div class="artspay-express-checkout artspay-express-checkout--' . esc_attr( $wrap_variant ) . $wrap_extra . '">';
+		echo '<div class="artspay-express-checkout artspay-express-checkout--' . esc_attr( $wrap_variant ) . $wrap_extra . '">'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $wrap_extra is a fixed class name.
 		echo '<div class="artspay-express-checkout__buttons">';
 
 		if ( $apple_ok ) {
