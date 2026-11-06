@@ -21,7 +21,7 @@ These are always on. Attempts are counted just before the call to Fat Zebra, and
 - When an order reaches its limit it is marked **Failed**, with an order note. Once the window ends the same order can be paid.
 - When a session or IP limit stops a payment, the order gets a note and keeps its status.
 - A successful payment resets the order and session counts. It doesn't count towards the IP limit, so a box office selling from one IP isn't limited by its sales, but earlier declines from that IP still count.
-- A gateway outage doesn't use up an attempt.
+- A gateway outage or rejected API credentials don't use up an attempt.
 - Every declined payment adds an order note with the Fat Zebra transaction ID.
 
 Change the numbers with the `artspay_attempt_limits` filter:

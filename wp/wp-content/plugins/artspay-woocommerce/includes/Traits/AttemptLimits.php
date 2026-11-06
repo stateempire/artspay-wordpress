@@ -9,6 +9,7 @@ namespace ArtsPay\Traits;
 
 use ArtsPay\Debug_Logger;
 use WC_Order;
+use WP_Error;
 
 /**
  * AttemptLimits trait.
@@ -101,6 +102,27 @@ trait AttemptLimits {
 			++$entry['count'];
 			set_transient( $key, $entry, max( 1, $entry['expires'] - time() ) );
 		}
+	}
+
+	/**
+	 * Check whether a failed payment was about the card, not the gateway. Rejected credentials
+	 * and server errors say nothing about the card, so they must not use up attempts.
+	 *
+	 * @param WP_Error $result Failed payment result.
+	 *
+	 * @return bool True if the attempt should count.
+	 */
+	private function is_card_failure( WP_Error $result ): bool {
+		$code = $result->get_error_code();
+
+		if ( 1 === $code ) {
+			$data = $result->get_error_data();
+			$http = is_array( $data ) && isset( $data['response']['code'] ) ? (int) $data['response']['code'] : 0;
+
+			return $http >= 400 && $http < 500 && ! in_array( $http, array( 401, 403 ), true );
+		}
+
+		return in_array( $code, array( 2, 3 ), true );
 	}
 
 	/**

@@ -1531,7 +1531,7 @@ class CreditCardGateway extends WC_Payment_Gateway_CC {
 					break;
 			}
 
-			if ( in_array( $result->get_error_code(), array( 1, 2, 3 ), true ) ) {
+			if ( $this->is_card_failure( $result ) ) {
 				$attempt_scope = $this->get_exceeded_attempt_scope( (int) $order_id );
 				if ( '' !== $attempt_scope ) {
 					$this->apply_attempt_limit( $order, $attempt_scope );
