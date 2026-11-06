@@ -37,6 +37,38 @@ trait Utils {
 	}
 
 	/**
+	 * Get the visitor IP used for attempt limits.
+	 *
+	 * Not WooCommerce's lookup: it takes the first X-Forwarded-For entry, which the client
+	 * controls, so a tester could send a new value with every request. The last entry is the
+	 * one added by the nearest proxy. A store without Cloudflare behind several proxies should
+	 * use the filter below.
+	 *
+	 * @return string IP address, or an empty string when none is valid.
+	 */
+	public function get_rate_limit_ip(): string {
+		$ip = '';
+
+		if ( ! empty( $_SERVER['HTTP_CF_CONNECTING_IP'] ) ) {
+			$ip = sanitize_text_field( wp_unslash( $_SERVER['HTTP_CF_CONNECTING_IP'] ) );
+		} elseif ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
+			$forwarded = explode( ',', sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) );
+			$ip        = trim( (string) end( $forwarded ) );
+		} elseif ( ! empty( $_SERVER['REMOTE_ADDR'] ) ) {
+			$ip = sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) );
+		}
+
+		/**
+		 * Filter the visitor IP used for attempt limits.
+		 *
+		 * @param string $ip IP address.
+		 */
+		$ip = (string) apply_filters( 'artspay_rate_limit_ip', $ip );
+
+		return false !== filter_var( $ip, FILTER_VALIDATE_IP ) ? $ip : '';
+	}
+
+	/**
 	 * Safely convert to cents, preventing rounding errors
 	 * Before: $134.95 = 13,494 cents
 	 * After: $134.95 = 13,495 cents

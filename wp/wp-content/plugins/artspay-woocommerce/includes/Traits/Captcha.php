@@ -8,6 +8,7 @@
 namespace ArtsPay\Traits;
 
 use ArtsPay\Assets\Core;
+use ArtsPay\Debug_Logger;
 
 /**
  * Captcha trait.
@@ -187,7 +188,66 @@ trait Captcha {
 		$body = wp_remote_retrieve_body( $response );
 		$data = json_decode( $body, true );
 
-		return isset( $data['success'] ) && true === $data['success'];
+		if ( ! is_array( $data ) || ! isset( $data['success'] ) || true !== $data['success'] ) {
+			return false;
+		}
+
+		return $this->is_trusted_captcha_response( $provider, $data );
+	}
+
+	/**
+	 * Check the details of a successful captcha response. A provider reports success for any
+	 * valid token, so a reCAPTCHA v3 token from a likely bot still has `success: true`.
+	 *
+	 * @param string $provider Captcha provider.
+	 * @param array  $data     Decoded provider response.
+	 *
+	 * @return bool True if the response can be trusted.
+	 */
+	private function is_trusted_captcha_response( string $provider, array $data ): bool {
+		// Provider test keys report their own hostname, so this only applies to live stores.
+		if ( ! $this->is_sandbox_mode() && isset( $data['hostname'] ) ) {
+			$normalise = static fn( string $host ): string => preg_replace( '/^www\./', '', strtolower( $host ) );
+
+			/**
+			 * Filter the hostnames a captcha token can be issued for.
+			 *
+			 * @param string[] $hostnames Hostnames, without `www.`.
+			 */
+			$hostnames = apply_filters( 'artspay_captcha_allowed_hostnames', array( (string) wp_parse_url( home_url(), PHP_URL_HOST ) ) );
+
+			if ( ! in_array( $normalise( (string) $data['hostname'] ), array_map( $normalise, $hostnames ), true ) ) {
+				Debug_Logger::log( 'Captcha rejected: token issued for another hostname.', 'warning', array( 'hostname' => (string) $data['hostname'] ) );
+				return false;
+			}
+		}
+
+		if ( 'google' !== $provider ) {
+			return true;
+		}
+
+		/**
+		 * Filter the lowest reCAPTCHA v3 score accepted at checkout, from 0.0 (bot) to 1.0 (human).
+		 *
+		 * @param float $min_score Minimum score.
+		 */
+		$min_score = (float) apply_filters( 'artspay_recaptcha_min_score', 0.5 );
+		$score     = isset( $data['score'] ) ? (float) $data['score'] : 0.0;
+		$action    = isset( $data['action'] ) ? (string) $data['action'] : '';
+
+		if ( 'payment' !== $action || $score < $min_score ) {
+			Debug_Logger::log(
+				'Captcha rejected: reCAPTCHA action or score not accepted.',
+				'warning',
+				array(
+					'action' => $action,
+					'score'  => $score,
+				)
+			);
+			return false;
+		}
+
+		return true;
 	}
 
 	/**

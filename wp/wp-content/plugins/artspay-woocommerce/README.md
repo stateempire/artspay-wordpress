@@ -42,10 +42,6 @@ Open **WooCommerce → Settings → Payments → ArtsPay** (or **ArtsPay Credit 
 - **Sandbox mode** – uses Fat Zebra sandbox URLs and test credentials (defaults are the documented sandbox username/token `TEST` / `TEST` and shared secret).
 - **Production** – enter your live username, token, and shared secret from Fat Zebra / ArtsPay, and switch Sandbox Mode off.
 
-### Direct Post
-
-Enable only if you use the Direct Post JS flow and `fatzebra.js` (see Fat Zebra docs). Requires the **Gateway Shared Secret**.
-
 ### Deferred payments
 
 Tokenize and hold the order for manual capture later (not used for subscription carts).
@@ -61,14 +57,17 @@ Enable only after ArtsPay/Fat Zebra has activated Forter on the merchant account
 
 ### Captcha
 
-Optional reCAPTCHA v3 or Cloudflare Turnstile challenge before payment submit.
+Optional reCAPTCHA v3 or Cloudflare Turnstile challenge before payment submit. reCAPTCHA tokens need a score of 0.5 or higher, which the `artspay_recaptcha_min_score` filter can change. On live stores a token must also match the store's hostname. Use the `artspay_captcha_allowed_hostnames` filter if the store runs on more than one domain.
+
+### Payment attempt limits
+
+Always on. See [FRAUD.md](FRAUD.md#card-testing-protection) for the limits and filters.
 
 ## Payment flows
 
 | Mode | Behaviour |
 |------|-----------|
 | **Inline (server)** | Default. Card fields post to your server; the plugin calls Fat Zebra `purchases` API. |
-| **Direct Post** | Browser tokenizes via Fat Zebra; the plugin charges with `card_token`. Requires shared secret and Direct Post JS. |
 | **Google Pay / Apple Pay (wallets)** | When enabled, express buttons appear on the cart and checkout. The wallet token is charged through Fat Zebra's wallet purchase API. |
 
 ## Testing (sandbox)
@@ -117,7 +116,7 @@ includes/
   Gateways/
     CreditCardGateway.php    # Card, subscriptions, fraud, wallet tokens
   Admin/DeferredPayments.php
-  Traits/                    # Encryption, Utils, Captcha
+  Traits/                    # Encryption, Utils, Captcha, AttemptLimits
 assets/js/
   artspay-core.js
   artspay-checkout-autofill.js

@@ -5,7 +5,7 @@ Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0
 Requires Plugins: woocommerce
-Stable tag: 3.1.2
+Stable tag: 3.1.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -18,9 +18,9 @@ WooCommerce ArtsPay Gateway connects your WooCommerce store to **ArtsPay** / **F
 **Features:**
 
 * Inline (server-side) card checkout — the default flow.
-* Direct Post — browser-side tokenization via Fat Zebra's JS, charged with a card token (requires a Gateway Shared Secret).
 * Optional **Forter fraud screening** (via Fat Zebra), with order-level audit trail (`_artspay_fraud_result`, `_artspay_fraud_messages`) and optional email alerts on decline.
 * Optional captcha (reCAPTCHA v3 or Cloudflare Turnstile) before payment submission.
+* Payment attempt limits per order, session and IP address to stop card testing.
 * Deferred payments — tokenize and hold an order for manual capture later.
 * WooCommerce Subscriptions support.
 
@@ -38,7 +38,7 @@ See [FRAUD.md](FRAUD.md) in the repository for full detail on fraud screening be
 4. Enable the method, set the customer-facing title, enter your Fat Zebra / ArtsPay gateway credentials, and save.
 5. Test checkout in sandbox mode before going live.
 
-Full configuration detail (Direct Post, deferred payments, Forter, captcha) is in the repository [README](README.md).
+Full configuration detail (deferred payments, Forter, captcha) is in the repository [README](README.md).
 
 == Frequently Asked Questions ==
 
@@ -59,6 +59,17 @@ Wallet/express checkout support exists in the codebase but its enabled/disabled 
 [TODO: scamped, to add when deploying]
 
 == Changelog ==
+
+= 3.1.3 =
+* Security - Payment attempts are now limited, which stops one order being used to test many cards. An order gets 5 attempts an hour and an IP address gets 10. When an order reaches its limit it is marked as failed and an order note is added.
+* Security - Card payments sent directly to the Store API checkout endpoint are now rejected. The checkout page doesn't use this route, so it was only reachable by scripts.
+* Security - reCAPTCHA v3 now checks the score (0.5 or higher) and action. Previously any valid token passed, including one from a likely bot.
+* Security - Captcha tokens must now match the store's hostname on live stores.
+* Fix - The Turnstile widget disappeared after WooCommerce refreshed the checkout, so customers could fail their first attempt. It also now appears when a customer switches to card payment.
+* Fix - reCAPTCHA tokens are refreshed before they expire.
+* Note - Correction to 3.1.2: WooCommerce's IP lookup still trusts the first X-Forwarded-For entry unless the host overwrites it, so the customer IP on orders can be faked. Attempt limits use their own lookup instead.
+* Update - Every declined payment now adds an order note with the Fat Zebra transaction ID.
+* Remove - Direct Post is switched off and hidden from the settings until it is rebuilt, because the script it needs isn't included in the plugin. Stores with it enabled now use the standard card form. Saved settings are kept.
 
 = 3.1.2 =
 * Fix - Cardholder names with an apostrophe (for example O'Brien) were sent to Fat Zebra with a stray backslash.
@@ -81,6 +92,9 @@ Wallet/express checkout support exists in the codebase but its enabled/disabled 
 * Update - Google Pay / Apple Pay express checkout UI and storefront hooks are disabled in this release; wallet flows are planned to return in 3.1.1.
 
 == Upgrade Notice ==
+
+= 3.1.3 =
+Adds protection against card testing attacks and fixes the Turnstile captcha at checkout. Recommended for all stores. Direct Post is switched off in this release.
 
 = 3.1.2 =
 Fixes cardholder names with apostrophes and tightens checkout input handling. Recommended for all stores.

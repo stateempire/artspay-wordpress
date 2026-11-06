@@ -15,7 +15,7 @@ If your store had these two settings in different states, transaction behaviour 
 
 ### Hosted Payment Page (HPP) — removed entirely
 
-The **Use Hosted Payment Page**, **Logo URL**, and **CSS URL** settings are gone; HPP checkout is no longer supported. If your store was using HPP, checkout now falls through to **Inline** (default) or **Direct Post** (if you enable it and configure the Gateway Shared Secret). Test checkout on staging after upgrading — the customer-facing flow changes from a redirect to an on-site form.
+The **Use Hosted Payment Page**, **Logo URL**, and **CSS URL** settings are gone; HPP checkout is no longer supported. If your store was using HPP, checkout now falls through to **Inline**. Test checkout on staging after upgrading — the customer-facing flow changes from a redirect to an on-site form.
 
 ### Payment Method Title / Payment Icon — removed
 
@@ -33,6 +33,6 @@ The 3.1.0 refactor also renamed/moved classes — if you have custom code hookin
 1. Note your current **Sandbox Mode** and (if present) **Test Mode** settings before upgrading.
 2. Upgrade the plugin.
 3. Re-open **WooCommerce → Settings → Payments → ArtsPay** and confirm Sandbox Mode is correct — this now fully controls test-vs-live behaviour.
-4. If you were using the Hosted Payment Page, switch to Inline or Direct Post and test a full checkout on staging.
+4. If you were using the Hosted Payment Page, test a full Inline checkout on staging.
 5. If you'd customized the payment title or icon, expect the defaults; use the `woocommerce_fatzebra_icon` filter if a custom icon is required.
 6. Run a full sandbox checkout (purchase, refund, and subscription renewal if applicable) before considering the upgrade complete.

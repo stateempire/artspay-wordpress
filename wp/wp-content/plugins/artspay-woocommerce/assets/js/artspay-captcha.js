@@ -33,11 +33,6 @@ class ArtsPayCaptcha {
       maxRetries: 3
     };
 
-    this.debounceTimer = null;
-    this.debounceDelay = 300;
-
-    this.tokenGeneratedAt = null;
-
     this.init();
   }
 
@@ -83,26 +78,55 @@ class ArtsPayCaptcha {
       self.handleCheckoutUpdate();
     });
 
-    jQuery(document.body).on('update_checkout', function () {
-      if (self.tokenGeneratedAt) {
-        var now = Date.now();
-        var tokenAge = (now - self.tokenGeneratedAt) / 1000;
-
-        if (tokenAge >= 90) {
-          self.handleCheckoutUpdate();
-        }
-      }
+    // WooCommerce replaces the payment section on update, which removes the widget.
+    jQuery(document.body).on('updated_checkout', function () {
+      self.ensureCaptcha();
     });
+
+    jQuery(document.body).on('change', 'input[name="payment_method"]', function () {
+      self.ensureCaptcha();
+    });
+
+    // reCAPTCHA tokens expire after two minutes.
+    if (this.provider === 'google') {
+      setInterval(function () {
+        if (self.isArtsPayGatewaySelected()) {
+          self.generateReCaptchaToken();
+        }
+      }, 90000);
+    }
   }
 
   handleCheckoutUpdate() {
+    // The token was spent on the attempt that just failed.
+    this.clearToken();
+
     if (this.isArtsPayGatewaySelected()) {
       if (this.provider === 'google') {
         this.generateReCaptchaToken();
       } else if (this.provider === 'cloudflare') {
-        this.resetWidgetState();
+        this.cleanupTurnstileWidget();
         this.renderTurnstileWidget();
       }
+    }
+  }
+
+  ensureCaptcha() {
+    if (!this.isArtsPayGatewaySelected()) {
+      return;
+    }
+
+    if (this.provider === 'google') {
+      if (!jQuery('#captcha_token').val()) {
+        this.generateReCaptchaToken();
+      }
+      return;
+    }
+
+    var container = document.getElementById('captcha-container');
+    if (container && !container.hasChildNodes()) {
+      this.cleanupTurnstileWidget();
+      this.renderTurnstileWidget();
     }
   }
 
@@ -186,6 +210,14 @@ class ArtsPayCaptcha {
   }
 
   cleanupTurnstileWidget() {
+    if (typeof turnstile !== 'undefined' && this.widgetState.widgetId !== null) {
+      try {
+        turnstile.remove(this.widgetState.widgetId);
+      } catch (error) {
+        console.error('Turnstile remove error:', error);
+      }
+    }
+
     var container = document.getElementById('captcha-container');
     if (container) {
       container.innerHTML = '';
@@ -209,8 +241,6 @@ class ArtsPayCaptcha {
       await new Promise((resolve) => grecaptcha.ready(resolve));
       var token = await grecaptcha.execute(this.siteKey, { action: 'payment' });
       this.setToken(token);
-
-      this.tokenGeneratedAt = Date.now();
     } catch (err) {
       console.error('reCAPTCHA failed:', err);
     }

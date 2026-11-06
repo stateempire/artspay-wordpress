@@ -17,6 +17,7 @@ use ArtsPay\Express\GooglePay;
 use ArtsPay\Traits;
 use DateTime;
 use DateTimeZone;
+use Exception;
 use WC_Order;
 use WC_Payment_Gateway_CC;
 use WC_Product;
@@ -30,6 +31,7 @@ class CreditCardGateway extends WC_Payment_Gateway_CC {
 	use Traits\Encryption;
 	use Traits\Utils;
 	use Traits\Captcha;
+	use Traits\AttemptLimits;
 
 	/**
 	 * Global settings object.
@@ -126,6 +128,7 @@ class CreditCardGateway extends WC_Payment_Gateway_CC {
 		}
 
 		add_action( 'admin_notices', array( $this, 'maybe_fraud_settings_notice' ) );
+		add_action( 'woocommerce_rest_checkout_process_payment_with_context', array( $this, 'reject_store_api_payment' ), 1 );
 
 		$this->express_google_pay = new GooglePay( $this );
 		$this->express_google_pay->register_hooks();
@@ -234,7 +237,8 @@ class CreditCardGateway extends WC_Payment_Gateway_CC {
 	 * @return bool
 	 */
 	private function direct_post_enabled(): bool {
-		return 'yes' === $this->get_option( 'use_direct_post' ) && ! empty( $this->get_option( 'shared_secret' ) );
+		// Off until the 3.2 rewrite: fatzebra.js isn't shipped, so no card token is ever created.
+		return false;
 	}
 
 	/**
@@ -744,13 +748,11 @@ class CreditCardGateway extends WC_Payment_Gateway_CC {
 			),
 			'account' => array(
 				'title'       => esc_html__( 'Account details', 'artspay' ),
-				'description' => esc_html__( 'Gateway credentials from Fat Zebra, optional card logos, Direct Post, and deferred capture settings.', 'artspay' ),
+				'description' => esc_html__( 'Gateway credentials from Fat Zebra, optional card logos, and deferred capture settings.', 'artspay' ),
 				'fields'      => array(
 					'show_card_logos',
 					'username',
 					'token',
-					'shared_secret',
-					'use_direct_post',
 					'deferred_payments',
 				),
 				'links'       => $general_links,
@@ -856,6 +858,8 @@ class CreditCardGateway extends WC_Payment_Gateway_CC {
 				'google_pay_merchant_id',
 				'google_pay_google_merchant_id',
 				'apple_pay_enabled',
+				'shared_secret',
+				'use_direct_post',
 			);
 			foreach ( $detail_only_keys as $detail_key ) {
 				$post_key = $this->get_field_key( $detail_key );
@@ -1265,6 +1269,21 @@ class CreditCardGateway extends WC_Payment_Gateway_CC {
 	}
 
 	/**
+	 * Stop card payments arriving through the Store API checkout endpoint. No store page uses
+	 * it for this gateway, so a request here comes from a script and skips the checkout form.
+	 * Remove when block checkout support ships.
+	 *
+	 * @param object $context Store API payment context.
+	 *
+	 * @throws Exception When the payment is for this gateway.
+	 */
+	public function reject_store_api_payment( $context ): void {
+		if ( $this->id === $context->payment_method ) {
+			throw new Exception( esc_html__( 'This payment method is only available on the checkout page.', 'artspay' ) );
+		}
+	}
+
+	/**
 	 * Process the payment and return the result.
 	 *
 	 * @param int $order_id Order ID.
@@ -1273,6 +1292,13 @@ class CreditCardGateway extends WC_Payment_Gateway_CC {
 	 */
 	public function process_payment( $order_id ) {
 		global $woocommerce;
+
+		$attempt_scope = $this->get_exceeded_attempt_scope( (int) $order_id );
+		if ( '' !== $attempt_scope ) {
+			$this->apply_attempt_limit( new WC_Order( $order_id ), $attempt_scope );
+			wc_add_notice( $this->get_attempt_limit_message(), 'error' );
+			return;
+		}
 
 		if ( $this->is_captcha_enabled() ) {
 			$captcha_token = filter_input( INPUT_POST, 'captcha_token', FILTER_UNSAFE_RAW );
@@ -1287,6 +1313,8 @@ class CreditCardGateway extends WC_Payment_Gateway_CC {
 				return;
 			}
 		}
+
+		$this->record_payment_attempt( (int) $order_id );
 
 		$order = new WC_Order( $order_id );
 		$this->params['currency'] = $order->get_currency();
@@ -1474,6 +1502,14 @@ class CreditCardGateway extends WC_Payment_Gateway_CC {
 						/* translators: %s: gateway decline message */
 						wc_add_notice( sprintf( esc_html__( 'Payment declined: %s', 'artspay' ), wp_strip_all_tags( $decline_msg ) ), 'error' );
 					}
+					$order->add_order_note(
+						sprintf(
+							/* translators: 1: gateway decline message, 2: gateway transaction ID */
+							__( 'Payment declined: %1$s (Fat Zebra ID: %2$s)', 'artspay' ),
+							wp_strip_all_tags( $decline_msg ),
+							is_array( $err_data ) && isset( $err_data['id'] ) ? (string) $err_data['id'] : __( 'unknown', 'artspay' )
+						)
+					);
 					if ( $resp_wrap && isset( $resp_wrap->response ) ) {
 						$this->persist_fraud_order_meta( $order, $resp_wrap );
 						$this->add_forter_order_notes( $order, $resp_wrap->response );
@@ -1494,7 +1530,17 @@ class CreditCardGateway extends WC_Payment_Gateway_CC {
 					);
 					break;
 			}
+
+			if ( in_array( $result->get_error_code(), array( 1, 2, 3 ), true ) ) {
+				$attempt_scope = $this->get_exceeded_attempt_scope( (int) $order_id );
+				if ( '' !== $attempt_scope ) {
+					$this->apply_attempt_limit( $order, $attempt_scope );
+				}
+			} else {
+				$this->release_payment_attempt( (int) $order_id );
+			}
 		} else { // Success! Returned is an array with the transaction ID etc
+			$this->clear_payment_attempts( (int) $order_id );
 			$tx_label = isset( $result['transaction_id'] ) ? (string) $result['transaction_id'] : __( 'deferred/tokenize', 'artspay' );
 			Debug_Logger::log(
 				sprintf(

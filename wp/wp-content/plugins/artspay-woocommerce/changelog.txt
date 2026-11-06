@@ -1,5 +1,16 @@
 *** Changelog ***
 
+2026-11-06 - version 3.1.3
+* Security - Payment attempts are now limited, which stops one order being used to test many cards. An order gets 5 attempts an hour and an IP address gets 10. When an order reaches its limit it is marked as failed and an order note is added.
+* Security - Card payments sent directly to the Store API checkout endpoint are now rejected. The checkout page doesn't use this route, so it was only reachable by scripts.
+* Security - reCAPTCHA v3 now checks the score (0.5 or higher) and action. Previously any valid token passed, including one from a likely bot.
+* Security - Captcha tokens must now match the store's hostname on live stores.
+* Fix - The Turnstile widget disappeared after WooCommerce refreshed the checkout, so customers could fail their first attempt. It also now appears when a customer switches to card payment.
+* Fix - reCAPTCHA tokens are refreshed before they expire.
+* Note - Correction to 3.1.2: WooCommerce's IP lookup still trusts the first X-Forwarded-For entry unless the host overwrites it, so the customer IP on orders can be faked. Attempt limits use their own lookup instead.
+* Update - Every declined payment now adds an order note with the Fat Zebra transaction ID.
+* Remove - Direct Post is switched off and hidden from the settings until it is rebuilt, because the script it needs isn't included in the plugin. Stores with it enabled now use the standard card form. Saved settings are kept.
+
 2026-10-27 - version 3.1.2
 * Fix - Cardholder names with an apostrophe (for example O'Brien) were sent to Fat Zebra with a stray backslash.
 * Fix - PHP warnings when a checkout used the alternative card field names.

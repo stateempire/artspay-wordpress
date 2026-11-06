@@ -4,6 +4,55 @@ This document describes **Forter** (fraud screening via Fat Zebra) as implemente
 
 ---
 
+## Card testing protection
+
+Card testing is when a script tries stolen card numbers against a checkout to find the ones that work. WooCommerce reuses a pending or failed order while the cart stays the same, so without a limit one order can be used to try any number of cards.
+
+### Attempt limits
+
+These are always on. Attempts are counted just before the call to Fat Zebra, and a block stops the payment before that call.
+
+| Limit | Attempts | Window |
+|-------|----------|--------|
+| Per order | 5 | 1 hour |
+| Per session | 5 | 1 hour |
+| Per IP address | 10 | 1 hour |
+
+- When an order reaches its limit it is marked **Failed**, with an order note. Once the window ends the same order can be paid.
+- When a session or IP limit stops a payment, the order gets a note and keeps its status.
+- A successful payment resets the order and session counts. It doesn't count towards the IP limit, so a box office selling from one IP isn't limited by its sales, but earlier declines from that IP still count.
+- A gateway outage doesn't use up an attempt.
+- Every declined payment adds an order note with the Fat Zebra transaction ID.
+
+Change the numbers with the `artspay_attempt_limits` filter:
+
+```php
+add_filter( 'artspay_attempt_limits', function ( $limits ) {
+	$limits['ip'] = 20;
+	return $limits;
+} );
+```
+
+### Visitor IP
+
+The IP limit uses the `CF-Connecting-IP` header if there is one, then the last `X-Forwarded-For` entry, then `REMOTE_ADDR`. On a store behind several proxies without Cloudflare, the last `X-Forwarded-For` entry can be a proxy, so customers would share one count. Use the `artspay_rate_limit_ip` filter to return the right address.
+
+The per order limit doesn't depend on the IP address, so it applies even if an attacker changes IP.
+
+### Store API
+
+Card payments sent to WooCommerce's Store API checkout endpoint (`/wp-json/wc/store/v1/checkout`) are rejected. The plugin only supports the classic checkout, so a real customer never uses this route. Other payment methods aren't affected.
+
+### What these don't do
+
+Limits slow an attack down but don't stop one that keeps changing order, session and IP. For that, also use:
+
+- The captcha (**WooCommerce → Settings → Payments → ArtsPay**)
+- Rate limit rules at your firewall or CDN for `?wc-ajax=checkout`, `/checkout/order-pay/` and `/wp-json/wc/store/v1/checkout`
+- Forter, described below
+
+---
+
 ## Forter
 
 Forter screening is **optional**. When **WooCommerce → Settings → Payments → ArtsPay → Enable Forter fraud screening** is on, each eligible charge sends a **`fraud`** object on Fat Zebra’s **`purchases`** API (customer, line items, shipping; optional **`device_id`** from Fat Zebra’s fingerprint script when **Enable device fingerprinting** is enabled).
@@ -57,6 +106,6 @@ Fat Zebra documents **test billing emails** (for example `accept@email.com`, `ch
 
 ## 3DS (3-D Secure)
 
-**3-D Secure is not implemented in this plugin.** Card flows use the standard Fat Zebra purchase path (and optional Direct Post / wallet flows where documented elsewhere); liability shift and step-up authentication via 3DS are **not** handled by ArtsPay WooCommerce today.
+**3-D Secure is not implemented in this plugin.** Card flows use the standard Fat Zebra purchase path (and wallet flows where documented elsewhere); liability shift and step-up authentication via 3DS are **not** handled by ArtsPay WooCommerce today.
 
 If you need 3DS, discuss **availability and integration** with ArtsPay / Fat Zebra (product and MID-level), and any future WooCommerce support would be a **separate feature** from the current Forter payload behaviour above.
