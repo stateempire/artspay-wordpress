@@ -194,6 +194,58 @@ trait AttemptLimits {
 	}
 
 	/**
+	 * Count a 3D Secure check and say whether it may go ahead. Each check asks the card's bank
+	 * about the card, so without a limit the endpoint would be another way to test cards. The
+	 * limits are higher than the payment limits because a retry after a decline needs a new check.
+	 *
+	 * @return bool False when the session or IP has used all of its checks.
+	 */
+	private function record_three_ds_check(): bool {
+		/**
+		 * Filter the 3D Secure check limits.
+		 *
+		 * @param array $limits Checks allowed per session and IP, and the window in seconds.
+		 */
+		$limits = apply_filters(
+			'artspay_3ds_limits',
+			array(
+				'session' => 10,
+				'ip'      => 20,
+				'window'  => HOUR_IN_SECONDS,
+			)
+		);
+
+		$keys = array();
+		foreach ( $this->get_attempt_keys( 0 ) as $scope => $key ) {
+			if ( 'order' !== $scope ) {
+				$keys[ $scope ] = str_replace( 'artspay_attempts_', 'artspay_3ds_', $key );
+			}
+		}
+
+		foreach ( $keys as $scope => $key ) {
+			$entry = get_transient( $key );
+			if ( is_array( $entry ) && $entry['count'] >= (int) $limits[ $scope ] ) {
+				Debug_Logger::log( sprintf( '3D Secure check limit reached (scope=%s).', $scope ), 'warning' );
+				return false;
+			}
+		}
+
+		foreach ( $keys as $key ) {
+			$entry = get_transient( $key );
+			if ( ! is_array( $entry ) ) {
+				$entry = array(
+					'count'   => 0,
+					'expires' => time() + (int) $limits['window'],
+				);
+			}
+			++$entry['count'];
+			set_transient( $key, $entry, max( 1, $entry['expires'] - time() ) );
+		}
+
+		return true;
+	}
+
+	/**
 	 * Get the message shown when a limit stops a payment.
 	 *
 	 * @return string Error message.

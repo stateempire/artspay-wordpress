@@ -3,7 +3,7 @@
  * Plugin Name:       WooCommerce ArtsPay Gateway
  * Plugin URI:        https://artspay.com
  * Description:       Combine your current WordPress Woo Commerce installation with ArtsPay for a payments solution that gives back to the arts. Supports WooCommerce Subscriptions.
- * Version:           3.2.0
+ * Version:           3.3.0
  * Requires at least: 6.0
  * Requires PHP:      8.0
  * Requires Plugins:  woocommerce
@@ -24,7 +24,7 @@ if ( ! defined( 'WPINC' ) ) {
 define( 'ARTSPAY_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'ARTSPAY_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
-const ARTSPAY_PLUGIN_VERSION = '3.2.0';
+const ARTSPAY_PLUGIN_VERSION = '3.3.0';
 const ARTSPAY_PLUGIN_FILE    = __FILE__;
 
 spl_autoload_register(
@@ -49,6 +49,18 @@ spl_autoload_register(
 // Register activation/deactivation hooks.
 register_activation_hook( __FILE__, array( 'ArtsPay\Plugin', 'activate' ) );
 register_deactivation_hook( __FILE__, array( 'ArtsPay\Plugin', 'deactivate' ) );
+
+// Order data goes through WC_Order meta methods, so it works with HPOS and with posts storage.
+// Blocks\CardMethod registers the gateway with the block Cart and Checkout.
+add_action(
+	'before_woocommerce_init',
+	function (): void {
+		if ( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
+			\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', ARTSPAY_PLUGIN_FILE, true );
+			\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'cart_checkout_blocks', ARTSPAY_PLUGIN_FILE, true );
+		}
+	}
+);
 
 // Initialize the plugin.
 add_action(

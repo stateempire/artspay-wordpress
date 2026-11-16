@@ -1,18 +1,19 @@
 /* global jQuery */
 
 /**
- * ArtsPay secure hosted card form (Fat Zebra, tokenize only) with optional 3D Secure.
+ * ArtsPay secure hosted card form on the classic checkout and pay-for-order page.
  *
  * Flow: the customer enters their card in Fat Zebra's form and presses Pay now. Fat Zebra returns a
- * card token, 3DS runs against it with fatzebra.js when enabled, then the checkout submits with
- * the token and 3DS result. The store charges the token, so card numbers never reach it.
- * Config: window.ArtsPay.hostedCard.
+ * card token, 3DS runs against it when enabled, then the checkout submits with the token and 3DS
+ * result. The store charges the token, so card numbers never reach it.
+ * Config: window.ArtsPay.hostedCard. Helpers: window.ArtsPay.fatZebra (artspay-fatzebra.js).
  */
 (function ($) {
   'use strict';
 
   var cfg = window.ArtsPay && window.ArtsPay.hostedCard;
-  if (!cfg) {
+  var fz = window.ArtsPay && window.ArtsPay.fatZebra;
+  if (!cfg || !fz) {
     return;
   }
 
@@ -24,8 +25,6 @@
     loading: false,
     verifying: false
   };
-  var sdk = null;
-  var sdkLoading = null;
 
   function getForm() {
     var $checkout = $('form.checkout');
@@ -62,35 +61,10 @@
     $('.artspay-hosted-card__3ds').val(result ? JSON.stringify(result) : '');
   }
 
-  function parseMessage(raw) {
-    if (raw && typeof raw === 'object') {
-      return raw;
-    }
-    if (typeof raw !== 'string' || /\[object/i.test(raw)) {
-      return null;
-    }
-    try {
-      return JSON.parse(raw);
-    } catch (e) {
-      var out = {};
-      raw.split('&').forEach(function (pair) {
-        var kv = pair.split('=');
-        out[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1] || '');
-      });
-      return out;
-    }
-  }
-
   function renderSaved() {
     var $box = $('.artspay-hosted-card');
-    var card = state.card || {};
-    var digits = String(card.number || '').replace(/\D/g, '').slice(-4);
-    var label = digits
-      ? cfg.strings.saved.replace('%1$s', card.type || 'Card').replace('%2$s', digits)
-      : cfg.strings.savedFallback;
-
     $box.find('.artspay-hosted-card__frame').attr('hidden', true).empty();
-    $box.find('.artspay-hosted-card__saved').removeAttr('hidden').find('.artspay-hosted-card__saved-label').text(label);
+    $box.find('.artspay-hosted-card__saved').removeAttr('hidden').find('.artspay-hosted-card__saved-label').text(fz.savedLabel(cfg, state.card));
     $box.find('.artspay-hosted-card__token').val(state.token);
     $box.find('.artspay-hosted-card__3ds').val(state.sca ? JSON.stringify(state.sca) : '');
     syncPlaceOrder();
@@ -108,28 +82,14 @@
     $frame.removeAttr('hidden');
 
     var params = new URLSearchParams(window.location.search);
-    $.post(cfg.formUrl, {
-      nonce: cfg.nonce,
-      order_id: $box.data('order-id') || 0,
-      order_key: params.get('key') || ''
-    })
-      .done(function (res) {
-        if (!res || !res.success || !res.data || !res.data.url) {
-          $frame.html('<p class="artspay-hosted-card__error"></p>').find('p').text(cfg.strings.formError);
-          return;
-        }
-        var iframe = document.createElement('iframe');
-        iframe.src = res.data.url;
-        iframe.title = 'Secure card form';
-        iframe.className = 'artspay-hosted-card__iframe';
-        iframe.setAttribute('scrolling', 'no');
-        iframe.setAttribute('allowtransparency', 'true');
-        $frame.empty().append(iframe);
+    fz.requestFormUrl(cfg, $box.data('order-id') || 0, params.get('key') || '')
+      .then(function (url) {
+        fz.mountFrame($frame[0], url);
       })
-      .fail(function () {
-        $frame.html('<p class="artspay-hosted-card__error"></p>').find('p').text(cfg.strings.formError);
+      .catch(function (err) {
+        $frame.html('<p class="artspay-hosted-card__error"></p>').find('p').text(err.message);
       })
-      .always(function () {
+      .then(function () {
         state.loading = false;
       });
   }
@@ -171,89 +131,6 @@
     getForm().trigger('submit');
   }
 
-  function onTokenised(msg, data) {
-    var token = data.token || data.t || msg.token || msg.t || '';
-    if (!token || token === state.token) {
-      return;
-    }
-    state.token = token;
-    state.card = { number: data.card_number || '', type: data.card_type || '' };
-    setScaResult(null);
-    renderSaved();
-    submitCheckout();
-  }
-
-  window.addEventListener('message', function (event) {
-    if (event.origin !== cfg.paynowOrigin) {
-      return;
-    }
-    var msg = parseMessage(event.data);
-    if (!msg) {
-      return;
-    }
-
-    var height = msg.height || msg.height_px || (msg.data && msg.data.height);
-    if (height && parseInt(height, 10) > 0) {
-      $('.artspay-hosted-card__iframe').css({ height: parseInt(height, 10) + 'px' });
-    }
-
-    var data = msg.data && typeof msg.data === 'object' ? msg.data : msg;
-    if (msg.message === 'transaction.complete') {
-      onTokenised(msg, data);
-    } else if (msg.message === 'transaction.cancelled') {
-      showError(cfg.strings.cancelled);
-    }
-  });
-
-  function loadSdk() {
-    if (sdk) {
-      return $.Deferred().resolve(sdk).promise();
-    }
-    if (sdkLoading) {
-      return sdkLoading;
-    }
-
-    var deferred = $.Deferred();
-    var script = document.createElement('script');
-    script.src = cfg.sdkUrl;
-    script.async = true;
-    script.onload = function () {
-      if (typeof window.FatZebra !== 'function') {
-        sdkLoading = null;
-        deferred.reject();
-        return;
-      }
-      sdk = new window.FatZebra({ username: cfg.username });
-      sdk.on('fz.sca.success', function (event) {
-        if (!state.verifying) {
-          return;
-        }
-        state.verifying = false;
-        setScaResult((event.detail && event.detail.data) || {});
-        // WooCommerce ignores a submit while the form has the processing class.
-        unblock();
-        submitCheckout();
-      });
-      sdk.on('fz.sca.error', function () {
-        if (!state.verifying) {
-          return;
-        }
-        state.verifying = false;
-        setScaResult(null);
-        unblock();
-        showError(cfg.strings.verifyFailed);
-      });
-      deferred.resolve(sdk);
-    };
-    script.onerror = function () {
-      sdkLoading = null;
-      deferred.reject();
-    };
-    document.head.appendChild(script);
-    sdkLoading = deferred.promise();
-    return sdkLoading;
-  }
-
   function block() {
     getForm().addClass('processing').block({ message: null, overlayCSS: { background: '#fff', opacity: 0.6 } });
   }
@@ -271,64 +148,33 @@
     block();
 
     var $box = $('.artspay-hosted-card');
-    $.post(cfg.prepareUrl, { nonce: cfg.nonce, card_token: state.token })
-      .then(function (res) {
-        if (!res || !res.success) {
-          return $.Deferred().reject().promise();
-        }
-        try {
-          // fatzebra.js reads its access token from here.
-          window.localStorage.setItem('fz-access-token', res.data.accessToken);
-        } catch (e) {
-          return $.Deferred().reject().promise();
-        }
-        return loadSdk().then(function (instance) {
-          // Fat Zebra can take a moment to make a new card token usable (as in artspay-pay).
-          var ready = $.Deferred();
-          setTimeout(function () {
-            ready.resolve({ instance: instance, verification: res.data.verification });
-          }, 500);
-          return ready.promise();
-        });
-      })
-      .then(function (ctx) {
-        // Unblocking happens in the fz.sca.* handlers or when the checkout response returns.
-        var result = ctx.instance.verifyCard({
-          customer: {
-            firstName: field('billing_first_name'),
-            lastName: field('billing_last_name'),
-            email: field('billing_email'),
-            address: field('billing_address_1'),
-            city: field('billing_city'),
-            state: field('billing_state'),
-            postcode: field('billing_postcode'),
-            country: field('billing_country')
-          },
-          paymentIntent: {
-            payment: {
-              amount: parseInt($box.data('total'), 10) || 0,
-              currency: String($box.data('currency') || 'AUD'),
-              reference: 'wc-' + Date.now()
-            },
-            verification: ctx.verification
-          },
-          paymentMethod: { type: 'card_on_file', data: { token: state.token } }
-        });
-        if (result && typeof result.catch === 'function') {
-          result.catch(function (err) {
-            window.console.error('ArtsPay: verifyCard failed', err && (err.response ? JSON.stringify(err.response.data) : err.message || err));
-            if (state.verifying) {
-              state.verifying = false;
-              unblock();
-              showError(cfg.strings.verifyError);
-            }
-          });
-        }
-      })
-      .fail(function () {
+    fz.verifyCard(cfg, {
+      token: state.token,
+      amount: parseInt($box.data('total'), 10) || 0,
+      currency: String($box.data('currency') || 'AUD'),
+      customer: {
+        firstName: field('billing_first_name'),
+        lastName: field('billing_last_name'),
+        email: field('billing_email'),
+        address: field('billing_address_1'),
+        city: field('billing_city'),
+        state: field('billing_state'),
+        postcode: field('billing_postcode'),
+        country: field('billing_country')
+      }
+    })
+      .then(function (result) {
         state.verifying = false;
+        setScaResult(result);
+        // WooCommerce ignores a submit while the form has the processing class.
         unblock();
-        showError(cfg.strings.verifyError);
+        submitCheckout();
+      })
+      .catch(function (err) {
+        state.verifying = false;
+        setScaResult(null);
+        unblock();
+        showError(err.message);
       });
   }
 
@@ -349,6 +195,25 @@
     }
     return true;
   }
+
+  fz.listen(cfg, {
+    onHeight: function (height) {
+      $('.artspay-hosted-card__iframe').css({ height: height + 'px' });
+    },
+    onCard: function (card) {
+      if (card.token === state.token) {
+        return;
+      }
+      state.token = card.token;
+      state.card = card;
+      setScaResult(null);
+      renderSaved();
+      submitCheckout();
+    },
+    onCancel: function () {
+      showError(cfg.strings.cancelled);
+    }
+  });
 
   $(function () {
     $('form.checkout').on('checkout_place_order_fatzebra', beforePlaceOrder);

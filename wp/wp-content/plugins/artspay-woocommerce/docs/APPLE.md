@@ -40,7 +40,11 @@ If verification fails, use `curl -i` against the exact verification URL and conf
 
 ## After the file is reachable
 
-Use the plugin’s **Register domain with ArtsPay** action (this calls **Fat Zebra**’s Apple Pay domain registration API for your merchant).
+Register the domain in the **ArtsPay Dashboard**: **Settings → Wallets → Apple Pay → Add domain**. Use `dashboard.artspay.com` for a live store and `dashboard-beta.artspay.com` for a store in sandbox mode, so the registration matches the store's Fat Zebra environment. If the domain shows Pending or Failed, press **Retry**: the Dashboard checks the file, then registers the domain with Fat Zebra. It's ready when it shows **Verified**.
+
+The ArtsPay account must use the same Fat Zebra merchant as the store. Apple Pay checks the registration against the merchant whose credentials the store uses.
+
+No Dashboard access? The plugin's Apple Pay panel can register the domain from WordPress instead (**Register domain from this site**). It calls the same Fat Zebra API with the store's gateway credentials.
 
 If checkout runs on a **different hostname** than your WordPress Site Address (for example `www` vs apex, staging domains, tunnels), you must host the file and register **that checkout hostname**.
 

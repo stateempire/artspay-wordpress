@@ -1,0 +1,73 @@
+/* ArtsPay on the block Cart and Checkout. The hosted form shares hosted-card.css. */
+
+.artspay-blocks-label {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+}
+
+.artspay-blocks-label__icons {
+	display: inline-flex;
+	gap: 6px;
+	margin-inline-start: auto;
+}
+
+.artspay-blocks-label .artspay-card-logo {
+	height: 24px;
+	width: auto;
+	border-radius: 3px;
+}
+
+.artspay-blocks .artspay-test-mode-notice {
+	margin-bottom: 12px;
+}
+
+.artspay-blocks-card {
+	display: grid;
+	gap: 12px;
+}
+
+.artspay-blocks-card__row {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+}
+
+.artspay-blocks-field {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.artspay-blocks-field label {
+	font-size: 0.875em;
+}
+
+.artspay-blocks-field input {
+	padding: 12px;
+	border: 1px solid rgba(0, 0, 0, 0.3);
+	border-radius: 4px;
+	font: inherit;
+}
+
+.artspay-blocks-captcha {
+	margin-top: 16px;
+}
+
+.artspay-blocks-wallet {
+	min-height: 48px;
+}
+
+.artspay-blocks-wallet apple-pay-button {
+	--apple-pay-button-width: 100%;
+	--apple-pay-button-height: 48px;
+	--apple-pay-button-border-radius: 4px;
+	display: block;
+}
+
+/* The hosted form's Pay now button starts payment until a card is saved. */
+body.artspay-hosted-card-pending .wc-block-components-checkout-place-order-button {
+	display: none;
+}

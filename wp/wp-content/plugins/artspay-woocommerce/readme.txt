@@ -5,7 +5,7 @@ Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0
 Requires Plugins: woocommerce
-Stable tag: 3.2.0
+Stable tag: 3.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -26,7 +26,7 @@ WooCommerce ArtsPay Gateway connects your WooCommerce store to **ArtsPay** / **F
 * Deferred payments — tokenize and hold an order for manual capture later.
 * WooCommerce Subscriptions support.
 
-**Checkout:** ArtsPay currently works with the classic (shortcode) checkout. If your Checkout page uses the Checkout block, edit the page, select the block and choose "Switch to classic checkout". Block checkout support is planned.
+**Checkout:** ArtsPay works with both the Checkout block (the default on new stores) and the classic (shortcode) checkout, including Google Pay and Apple Pay on the block Cart and Checkout.
 
 **PHP:** the plugin runs on PHP 8.0 or later, but we recommend PHP 8.3 or later, kept on the latest patch release. Older PHP versions no longer receive security fixes.
 
@@ -54,18 +54,30 @@ Use the billing emails `accept@email.com`, `challenge@email.com`, or `deny@email
 
 = Does this support Google Pay or Apple Pay? =
 
-Wallet/express checkout support exists in the codebase but its enabled/disabled status varies by release — check the Changelog below and the plugin settings for the version you're running.
-
-== Screenshots ==
-
-[TODO: scamped, to add when deploying]
+Yes. Turn them on under **Express checkouts** in the ArtsPay settings. The buttons appear on the cart and checkout. Google Pay needs a Fat Zebra Google Pay merchant ID, and Apple Pay needs your domain verified and registered from the same page. Both need HTTPS on a live store.
 
 == Changelog ==
+
+= 3.3.0 =
+* Add - Block Cart and Checkout support. ArtsPay now appears in the Checkout block with the secure hosted card form (including 3D Secure) or the on-site card form, and captcha. Stores no longer need to switch to the classic checkout.
+* Add - Google Pay and Apple Pay on the block Cart and Checkout, as express payment buttons. They replace the earlier buttons on block pages, which filled in classic checkout fields the block checkout never sent.
+* Fix - Payment errors (such as a decline) now show their reason on the block checkout instead of a general error.
+* Update - Captcha and wallet tokens are read from the payment data WooCommerce passes to the gateway, so they work with both checkouts.
+* Update - Apple Pay setup now points to the ArtsPay Dashboard (Settings → Wallets → Add domain) to register the store's domain, and links the verification file for the store's current mode only. Registering from the plugin is still available for merchants without Dashboard access.
+* Remove - The rule from 3.1.3 that rejected card payments through the Store API. The block checkout uses that route; attempt limits and captcha still apply to it.
+* Dev - Hosted form and 3D Secure code shared by both checkouts (`artspay-fatzebra.js`). Block checkout browser tests in `tests/e2e`.
 
 = 3.2.0 =
 * Add - Secure hosted card form. Set Card form to "Secure hosted form" and customers enter their card in Fat Zebra's form inside your checkout. Card numbers go straight to Fat Zebra and never reach your server, which keeps the store out of most PCI scope (SAQ A). Needs the Gateway Shared Secret.
 * Add - 3D Secure. With the hosted form, the customer's bank can verify the cardholder before a card is charged, which shifts liability for fraudulent chargebacks to the card issuer. Payments that fail verification are blocked, and each order gets a note with the outcome. Needs 3D Secure turned on for the merchant account and an OAuth client from Fat Zebra. Deferred payments and $0 orders skip it.
 * Update - Settings: Forter, 3D Secure and Captcha now each have their own page under a new Fraud & security section, with an On, Off or Needs setup label on each. The Gateway Shared Secret is shown again under Account details.
+* Fix - Capturing a deferred payment marked the order as paid even when the card was declined. A declined capture now leaves the order on hold with a note.
+* Fix - Works with WooCommerce's order storage (HPOS), the default on new stores. Card tokens, deferred payment details, fraud results and the device ID were saved where HPOS stores don't read them, which could break deferred capture, refunds and renewals. Existing orders keep their data.
+* Fix - Fat Zebra rejected a payment as "Reference is already taken" when an order was retried, captured later, or shared a merchant account with another store. Every attempt now gets its own reference: the order number plus a short suffix.
+* Security - 3D Secure checks are limited to 10 per session and 20 per IP address an hour (filter: `artspay_3ds_limits`), so the check can't be used to test cards.
+* Update - Forter now receives "pickup" or "international" as the shipping method when they apply, instead of always "low_cost". Filter: `artspay_fraud_shipping_method`.
+* Remove - Direct Post code and its hidden setting. The secure hosted card form replaces it.
+* Dev - Browser tests (Playwright) for checkout, 3D Secure and settings in `tests/e2e`, with a script that builds a throwaway test store.
 
 = 3.1.4 =
 * Fix - After a declined Google Pay or Apple Pay payment, the spent wallet token stayed on the page. Paying with a card then resent the token and ignored the card, using up payment attempts.
@@ -104,8 +116,11 @@ Wallet/express checkout support exists in the codebase but its enabled/disabled 
 
 == Upgrade Notice ==
 
+= 3.3.0 =
+Adds support for the block Cart and Checkout, including Google Pay and Apple Pay. If you switched your Checkout page to the classic checkout for ArtsPay, you can switch it back.
+
 = 3.2.0 =
-Adds an optional secure hosted card form and 3D Secure, and moves Forter, 3D Secure and Captcha onto their own settings pages. Nothing changes at checkout until you switch them on.
+Adds an optional secure hosted card form and 3D Secure, moves Forter, 3D Secure and Captcha onto their own settings pages, adds support for WooCommerce's order storage (HPOS), and fixes declined deferred captures being marked as paid. Recommended for all stores.
 
 = 3.1.4 =
 Fixes paying by card after a declined Google Pay or Apple Pay payment. Recommended for stores using wallets.

@@ -137,6 +137,11 @@ final class GooglePay {
 			return;
 		}
 
+		// Block Cart and Checkout get Google Pay from the block integration (Blocks\CardMethod).
+		if ( ! $on_order_pay && ( $this->page_has_cart_block() || $this->page_has_checkout_block() ) ) {
+			return;
+		}
+
 		Core::register_scripts();
 
 		wp_enqueue_style(
@@ -237,6 +242,39 @@ final class GooglePay {
 		);
 
 		wp_localize_script( 'artspay-core', 'artsPayLocalized', $config );
+	}
+
+	/**
+	 * Google Pay settings for the block checkout's express payment method.
+	 *
+	 * @return array<string, mixed>|null Null when Google Pay is off or not set up.
+	 */
+	public function get_blocks_config(): ?array {
+		if ( ! $this->is_express_enabled() ) {
+			return null;
+		}
+
+		$theme        = (string) $this->gateway->get_option( 'google_pay_theme', 'system' );
+		$button_color = 'default';
+		if ( 'dark' === $theme ) {
+			$button_color = 'black';
+		} elseif ( 'light' === $theme ) {
+			$button_color = 'white';
+		}
+
+		$base_location = function_exists( 'wc_get_base_location' ) ? wc_get_base_location() : array();
+		$base_country  = isset( $base_location['country'] ) ? (string) $base_location['country'] : '';
+
+		return array(
+			'gatewayMerchantId'   => trim( (string) $this->gateway->get_option( 'google_pay_merchant_id', '' ) ),
+			'googleMerchantId'    => trim( (string) $this->gateway->get_option( 'google_pay_google_merchant_id', '' ) ),
+			'googleMerchantName'  => get_bloginfo( 'name' ),
+			'environment'         => $this->gateway->is_sandbox_mode() ? 'TEST' : 'PRODUCTION',
+			'allowedCardNetworks' => array( 'VISA', 'MASTERCARD', 'AMEX', 'JCB' ),
+			'allowedCountryCodes' => '' !== $base_country ? array( $base_country ) : array(),
+			'buttonType'          => self::map_button_type_for_api( (string) $this->gateway->get_option( 'google_pay_button_action', 'buy' ) ),
+			'buttonColor'         => $button_color,
+		);
 	}
 
 	/**

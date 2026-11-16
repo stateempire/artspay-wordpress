@@ -347,6 +347,10 @@ trait HostedCard {
 			wp_send_json_error( null, 400 );
 		}
 
+		if ( ! $this->record_three_ds_check() ) {
+			wp_send_json_error( array( 'message' => $this->get_attempt_limit_message() ), 429 );
+		}
+
 		$access_token = $this->get_three_ds_access_token();
 		if ( '' === $access_token ) {
 			wp_send_json_error( null, 502 );
@@ -383,22 +387,14 @@ trait HostedCard {
 	}
 
 	/**
-	 * Load the hosted card form script, plus fatzebra.js when 3DS is on.
+	 * Config for the hosted card form and 3DS scripts, shared by the classic and block checkouts.
+	 *
+	 * @return array<string, mixed>
 	 */
-	private function enqueue_hosted_card_scripts(): void {
+	public function get_hosted_card_config(): array {
 		$hosts = $this->get_fatzebra_hosts();
 
-		wp_enqueue_style( 'artspay-hosted-card', ARTSPAY_PLUGIN_URL . 'assets/css/hosted-card.css', array(), ARTSPAY_PLUGIN_VERSION );
-
-		wp_enqueue_script(
-			'artspay-hosted-card',
-			ARTSPAY_PLUGIN_URL . 'assets/js/artspay-hosted-card.js',
-			array( 'jquery', 'jquery-blockui' ),
-			ARTSPAY_PLUGIN_VERSION,
-			true
-		);
-
-		$config = array(
+		return array(
 			'paynowOrigin' => $hosts['paynow'],
 			'sdkUrl'       => $hosts['cdn'] . '/sdk/v1/fatzebra.js',
 			'username'     => (string) $this->get_gateway_credentials()['username'],
@@ -410,17 +406,44 @@ trait HostedCard {
 				/* translators: 1: card scheme, e.g. Visa, 2: last four digits */
 				'saved'         => __( '%1$s ending %2$s', 'artspay' ),
 				'savedFallback' => __( 'Card saved', 'artspay' ),
-				'enterCard'    => __( 'Enter your card details in the secure card form, then press Pay now.', 'artspay' ),
-				'formError'    => __( 'The secure card form could not load. Refresh the page and try again.', 'artspay' ),
-				'verifyError'  => __( 'We couldn\'t verify your card with your bank. Try again or use a different card.', 'artspay' ),
-				'verifyFailed' => __( 'Your bank could not verify this card. Try again or use a different card.', 'artspay' ),
-				'cancelled'    => __( 'Card entry was cancelled.', 'artspay' ),
+				'change'        => __( 'Use a different card', 'artspay' ),
+				'loading'       => __( 'Loading secure card form…', 'artspay' ),
+				'note'          => __( 'Card details are entered securely with Fat Zebra and never reach this store.', 'artspay' ),
+				'enterCard'     => __( 'Enter your card details in the secure card form, then press Pay now.', 'artspay' ),
+				'formError'     => __( 'The secure card form could not load. Refresh the page and try again.', 'artspay' ),
+				'verifyError'   => __( 'We couldn\'t verify your card with your bank. Try again or use a different card.', 'artspay' ),
+				'verifyFailed'  => __( 'Your bank could not verify this card. Try again or use a different card.', 'artspay' ),
+				'cancelled'     => __( 'Card entry was cancelled.', 'artspay' ),
 			),
+		);
+	}
+
+	/**
+	 * Register the shared hosted card helpers (artspay-fatzebra) and stylesheet.
+	 */
+	public static function register_hosted_card_assets(): void {
+		wp_register_script( 'artspay-fatzebra', ARTSPAY_PLUGIN_URL . 'assets/js/artspay-fatzebra.js', array(), ARTSPAY_PLUGIN_VERSION, true );
+		wp_register_style( 'artspay-hosted-card', ARTSPAY_PLUGIN_URL . 'assets/css/hosted-card.css', array(), ARTSPAY_PLUGIN_VERSION );
+	}
+
+	/**
+	 * Load the classic checkout's hosted card form script. fatzebra.js loads later, only when 3DS runs.
+	 */
+	private function enqueue_hosted_card_scripts(): void {
+		self::register_hosted_card_assets();
+		wp_enqueue_style( 'artspay-hosted-card' );
+
+		wp_enqueue_script(
+			'artspay-hosted-card',
+			ARTSPAY_PLUGIN_URL . 'assets/js/artspay-hosted-card.js',
+			array( 'jquery', 'jquery-blockui', 'artspay-fatzebra' ),
+			ARTSPAY_PLUGIN_VERSION,
+			true
 		);
 
 		wp_add_inline_script(
 			'artspay-hosted-card',
-			'window.ArtsPay=window.ArtsPay||{};window.ArtsPay.hostedCard=' . wp_json_encode( $config ) . ';',
+			'window.ArtsPay=window.ArtsPay||{};window.ArtsPay.hostedCard=' . wp_json_encode( $this->get_hosted_card_config() ) . ';',
 			'before'
 		);
 	}

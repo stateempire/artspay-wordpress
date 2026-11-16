@@ -82,6 +82,11 @@ final class ApplePay {
 			return;
 		}
 
+		// Block Cart and Checkout get Apple Pay from the block integration (Blocks\CardMethod).
+		if ( ! $on_order_pay && ( $this->page_has_cart_block() || $this->page_has_checkout_block() ) ) {
+			return;
+		}
+
 		Core::register_scripts();
 
 		wp_enqueue_style(
@@ -163,6 +168,31 @@ final class ApplePay {
 			array(
 				'applePay' => $apple_pay_config,
 			)
+		);
+	}
+
+	/**
+	 * Apple Pay settings for the block checkout's express payment method.
+	 *
+	 * @return array<string, mixed>|null Null when Apple Pay is off.
+	 */
+	public function get_blocks_config(): ?array {
+		if ( ! $this->is_express_enabled() ) {
+			return null;
+		}
+
+		$base_location = function_exists( 'wc_get_base_location' ) ? wc_get_base_location() : array();
+		$buttons       = self::express_buttons_from_shared_wallet_settings( $this->gateway );
+		$locale        = str_replace( '_', '-', get_user_locale() );
+
+		return array(
+			'countryCode' => isset( $base_location['country'] ) ? (string) $base_location['country'] : 'AU',
+			'displayName' => mb_substr( (string) get_bloginfo( 'name' ), 0, 64 ),
+			'buttonType'  => $buttons['buttonType'],
+			'buttonStyle' => $buttons['buttonStyle'],
+			'locale'      => '' !== $locale ? $locale : 'en',
+			'restUrl'     => esc_url_raw( rest_url( 'artspay/v1/apple-pay/session' ) ),
+			'nonce'       => wp_create_nonce( 'artspay_applepay' ),
 		);
 	}
 

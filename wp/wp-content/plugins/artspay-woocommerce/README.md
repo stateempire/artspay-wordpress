@@ -9,7 +9,7 @@ Official ArtsPay payment integration for WooCommerce: accept cards via the Fat Z
 ## Requirements
 
 - **WordPress** 6.0 or higher (see plugin header for the authoritative minimum).
-- **WooCommerce** (required), using the classic (shortcode) checkout. The block-based Checkout is not supported yet: switch the Checkout block to classic checkout.
+- **WooCommerce** (required). Works with the Checkout block and the classic (shortcode) checkout.
 - **PHP** 8.0 or higher. We recommend PHP 8.3 or later, kept on the latest patch release: PHP 8.0 and 8.1 no longer receive security fixes, and 8.2's end on 31 December 2026.
 - **WooCommerce Subscriptions** (optional; required only for subscription features).
 
@@ -133,19 +133,26 @@ includes/
   Plugin.php                 # Hooks, gateway registration
   API/Client.php             # Fat Zebra HTTP client
   Assets/Core.php            # Shared artspay-core script
+  Blocks/CardMethod.php      # Block Cart/Checkout: card method and wallet settings
   Express/
-    GooglePay.php            # Google Pay express (when enabled)
-    Blocks.php               # Cart/Checkout block mounts (when enabled)
+    GooglePay.php            # Google Pay on the classic checkout (and block settings)
+    ApplePay.php             # Apple Pay on the classic checkout (and block settings)
   Gateways/
     CreditCardGateway.php    # Card, subscriptions, fraud, wallet tokens
   Admin/DeferredPayments.php
-  Traits/                    # Encryption, Utils, Captcha, AttemptLimits
+  Traits/                    # Encryption, Utils, Captcha, AttemptLimits, HostedCard
 assets/js/
+  artspay-blocks.js          # Block checkout: card method, Google Pay, Apple Pay
+  artspay-fatzebra.js        # Hosted form and 3D Secure, shared by both checkouts
+  artspay-hosted-card.js     # Hosted form on the classic checkout
   artspay-core.js
   artspay-checkout-autofill.js
   artspay-googlepay.js
+  artspay-applepay.js
   artspay-captcha.js
 assets/css/
+  blocks.css
+  hosted-card.css
   express-googlepay.css
 ```
 

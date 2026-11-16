@@ -91,8 +91,7 @@ class DeferredPayments {
 	 * @return bool True if deferred payment data exists.
 	 */
 	private function has_deferred_payment_data( WC_Order $order ): bool {
-		$card_token = get_post_meta( $order->get_id(), 'Card Token', true );
-		return ! empty( $card_token );
+		return ! empty( $order->get_meta( 'Card Token' ) );
 	}
 
 	/**
@@ -138,17 +137,18 @@ class DeferredPayments {
 		$ip         = $cc_gateway->get_order_ip_address( $order );
 
 		$params = array(
-			'card_token'  => get_post_meta( $order->get_id(), 'Card Token', true ),
-			'reference'   => get_post_meta( $order->get_id(), 'reference', true ),
-			'amount'      => get_post_meta( $order->get_id(), 'amount', true ),
-			'currency'    => get_post_meta( $order->get_id(), 'currency', true ),
+			'card_token'  => $order->get_meta( 'Card Token' ),
+			// A new reference: Fat Zebra rejects one that has been used before.
+			'reference'   => $cc_gateway->new_payment_reference( $order->get_id() ),
+			'amount'      => $order->get_meta( 'amount' ),
+			'currency'    => $order->get_meta( 'currency' ),
 			'customer_ip' => $ip, // Backwards compatible with existing payloads.
 			'ip_address'  => $ip,
 			'metadata'    => $cc_gateway->build_fatzebra_metadata_for_order( $order ),
 		);
 
 		// Add fraud data if enabled.
-		if ( 'true' === get_post_meta( $order->get_id(), 'fraud_data', true ) ) {
+		if ( 'true' === $order->get_meta( 'fraud_data' ) ) {
 			$params['fraud'] = $cc_gateway->get_fraud_payload( $order );
 		}
 
@@ -185,7 +185,9 @@ class DeferredPayments {
 			}
 		}
 
-		if ( 'false' !== $result['successful'] ) {
+		// purchase_with_token() returns a boolean. The old check compared it to the string 'false',
+		// so a declined capture was marked as paid.
+		if ( ! empty( $result['successful'] ) ) {
 			$order->payment_complete( $result['transaction_id'] ?? '' );
 			$order->add_order_note( __( 'Admin has processed the deferred payment successfully', 'artspay' ) );
 			$order->update_status( 'processing', __( 'Admin has processed the deferred payment successfully', 'artspay' ) );
@@ -206,11 +208,10 @@ class DeferredPayments {
 	 * @param WC_Order $order Order object.
 	 */
 	private function cleanup_deferred_payment_meta( WC_Order $order ): void {
-		delete_post_meta( $order->get_id(), 'Card Token' );
-		delete_post_meta( $order->get_id(), 'reference' );
-		delete_post_meta( $order->get_id(), 'amount' );
-		delete_post_meta( $order->get_id(), 'currency' );
-		delete_post_meta( $order->get_id(), 'fraud_data' );
+		foreach ( array( 'Card Token', 'reference', 'amount', 'currency', 'fraud_data' ) as $key ) {
+			$order->delete_meta_data( $key );
+		}
+		$order->save();
 	}
 
 	/**
