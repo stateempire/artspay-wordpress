@@ -1,6 +1,6 @@
 # WooCommerce ArtsPay Gateway
 
-Official ArtsPay payment integration for WooCommerce: accept cards via the Fat Zebra gateway, with optional fraud screening (Forter), captcha, and deferred capture. Supports WooCommerce Subscriptions.
+Official ArtsPay payment integration for WooCommerce: accept cards via the Fat Zebra gateway, with an optional secure hosted card form, 3D Secure, fraud screening (Forter), captcha, and deferred capture. Supports WooCommerce Subscriptions.
 
 **Plugin metadata:** see [`artspay-woocommerce.php`](artspay-woocommerce.php) (version, WordPress and PHP requirements, text domain).
 
@@ -42,6 +42,28 @@ Open **WooCommerce → Settings → Payments → ArtsPay** (or **ArtsPay Credit 
 - **Sandbox mode** – uses Fat Zebra sandbox URLs and test credentials (defaults are the documented sandbox username/token `TEST` / `TEST` and shared secret).
 - **Production** – enter your live username, token, and shared secret from Fat Zebra / ArtsPay, and switch Sandbox Mode off.
 
+### Card form
+
+- **On-site card form** (default): card fields sit in the checkout and post to your server, which sends them to Fat Zebra.
+- **Secure hosted form**: Fat Zebra's hosted payments page loads inside the checkout in tokenize-only mode. The customer presses **Pay now** in that form, Fat Zebra returns a card token, and the plugin charges the token. Card numbers never reach your server (PCI SAQ A). Needs the **Gateway Shared Secret**. WooCommerce's **Place order** button stays hidden until a card has been entered. The `artspay_hosted_card_css_url` filter changes the stylesheet loaded into the form.
+
+Subscriptions, deferred payments, Forter, captcha and attempt limits work the same with either form, because the plugin still makes the charge.
+
+### Fraud & security
+
+Forter, 3D Secure and Captcha each have their own settings page, opened from the **Fraud & security** section.
+
+### 3D Secure
+
+Needs the secure hosted form, 3D Secure turned on for the merchant account by ArtsPay, and an OAuth client (**Settings → OAuth Clients** in the Fat Zebra Merchant Dashboard). After the card is entered, fatzebra.js asks the customer's bank to verify the cardholder. Most customers pass without noticing. Some banks show a one-time code or app approval.
+
+- A failed or errored check blocks the payment. The customer can try again or use another card.
+- A successful check (including "attempted" and "not enrolled" outcomes) is sent with the purchase, and the order gets a note saying whether liability shifted.
+- The server refuses a hosted card payment with no 3DS result while 3D Secure is on.
+- Deferred payments and $0 orders skip 3D Secure, because the result is only valid for one immediate charge. Subscription renewals are charged without the customer, so only the first payment is verified.
+- Needs HTTPS, including on staging. fatzebra.js uses browser features (such as `crypto.randomUUID`) that only exist on secure pages, so on plain HTTP every check fails.
+- In sandbox, `4000 0000 0000 1000` passes straight through and `4000 0000 0000 1091` shows a bank challenge with the code `1234`.
+
 ### Deferred payments
 
 Tokenize and hold the order for manual capture later (not used for subscription carts).
@@ -68,6 +90,7 @@ Always on. See [FRAUD.md](FRAUD.md#card-testing-protection) for the limits and f
 | Mode | Behaviour |
 |------|-----------|
 | **Inline (server)** | Default. Card fields post to your server; the plugin calls Fat Zebra `purchases` API. |
+| **Secure hosted form** | Fat Zebra's form (tokenize only) inside the checkout returns a card token. Optional 3D Secure runs on that token with fatzebra.js, then the plugin charges the token with the 3DS result under `extra`. |
 | **Google Pay / Apple Pay (wallets)** | When enabled, express buttons appear on the cart and checkout. The wallet token is charged through Fat Zebra's wallet purchase API. |
 
 ## Testing (sandbox)

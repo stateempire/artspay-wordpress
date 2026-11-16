@@ -17,6 +17,8 @@ If your store had these two settings in different states, transaction behaviour 
 
 The **Use Hosted Payment Page**, **Logo URL**, and **CSS URL** settings are gone; HPP checkout is no longer supported. If your store was using HPP, checkout now falls through to **Inline**. Test checkout on staging after upgrading — the customer-facing flow changes from a redirect to an on-site form.
 
+From 3.2.0, a hosted card form is back as **Card form → Secure hosted form**. It loads Fat Zebra's form inside the checkout rather than redirecting, and supports 3D Secure. The old Logo URL and CSS URL settings do not return.
+
 ### Payment Method Title / Payment Icon — removed
 
 These admin fields (custom checkout title text and a custom icon URL) no longer exist. The gateway now shows a fixed title ("Credit / Debit Card", translatable via the `artspay` text domain) and a fixed icon. If you need a custom icon, it's now a developer-level change via the `woocommerce_fatzebra_icon` filter rather than an admin setting — there is no admin UI replacement for icon customization.

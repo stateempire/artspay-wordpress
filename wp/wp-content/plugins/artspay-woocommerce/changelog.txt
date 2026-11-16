@@ -1,5 +1,14 @@
 *** Changelog ***
 
+2026-11-16 - version 3.2.0
+* Add - Secure hosted card form. Set Card form to "Secure hosted form" and customers enter their card in Fat Zebra's form inside your checkout. Card numbers go straight to Fat Zebra and never reach your server, which keeps the store out of most PCI scope (SAQ A). Needs the Gateway Shared Secret.
+* Add - 3D Secure. With the hosted form, the customer's bank can verify the cardholder before a card is charged, which shifts liability for fraudulent chargebacks to the card issuer. Payments that fail verification are blocked, and each order gets a note with the outcome. Needs 3D Secure turned on for the merchant account and an OAuth client from Fat Zebra. Deferred payments and $0 orders skip it.
+* Update - Settings: Forter, 3D Secure and Captcha now each have their own page under a new Fraud & security section, with an On, Off or Needs setup label on each. The Gateway Shared Secret is shown again under Account details.
+
+2026-11-06 - version 3.1.4
+* Fix - After a declined Google Pay or Apple Pay payment, the spent wallet token stayed on the page. Paying with a card then resent the token and ignored the card, using up payment attempts.
+* Fix - The Google Pay "complete any required fields" message now only appears when the customer has something left to do, not when the order is submitting by itself.
+
 2026-11-06 - version 3.1.3
 * Security - Payment attempts are now limited, which stops one order being used to test many cards. An order gets 5 attempts an hour and an IP address gets 10. When an order reaches its limit it is marked as failed and an order note is added.
 * Security - Card payments sent directly to the Store API checkout endpoint are now rejected. The checkout page doesn't use this route, so it was only reachable by scripts.

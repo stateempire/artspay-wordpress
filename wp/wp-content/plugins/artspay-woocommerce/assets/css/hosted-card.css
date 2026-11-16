@@ -1,0 +1,57 @@
+/* ArtsPay secure hosted card form (checkout and pay-for-order). */
+
+.artspay-hosted-card {
+	margin-top: 12px;
+}
+
+.artspay-hosted-card__iframe {
+	display: block;
+	width: 100%;
+	min-height: 420px;
+	border: 0;
+	background: transparent;
+}
+
+.artspay-hosted-card__loading,
+.artspay-hosted-card__note {
+	margin: 8px 0 0;
+	font-size: 0.875em;
+	opacity: 0.75;
+}
+
+.artspay-hosted-card__error {
+	margin: 8px 0 0;
+	color: #b32d2e;
+}
+
+.artspay-hosted-card__saved {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	padding: 12px 14px;
+	border: 1px solid rgba(0, 0, 0, 0.15);
+	border-radius: 4px;
+}
+
+.artspay-hosted-card__saved[hidden] {
+	display: none;
+}
+
+.artspay-hosted-card__saved-label {
+	font-weight: 600;
+}
+
+.artspay-hosted-card__change {
+	padding: 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+/* The hosted form's Pay now button starts payment until a card is saved. */
+body.artspay-hosted-card-pending #place_order {
+	display: none;
+}

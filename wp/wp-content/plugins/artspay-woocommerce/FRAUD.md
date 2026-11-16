@@ -106,6 +106,20 @@ Fat Zebra documents **test billing emails** (for example `accept@email.com`, `ch
 
 ## 3DS (3-D Secure)
 
-**3-D Secure is not implemented in this plugin.** Card flows use the standard Fat Zebra purchase path (and wallet flows where documented elsewhere); liability shift and step-up authentication via 3DS are **not** handled by ArtsPay WooCommerce today.
+Available from 3.2.0 with the **secure hosted card form**. Set it up under **Fraud & security → 3D Secure**. It needs 3D Secure turned on for the merchant account and an OAuth client from the Fat Zebra Merchant Dashboard.
 
-If you need 3DS, discuss **availability and integration** with ArtsPay / Fat Zebra (product and MID-level), and any future WooCommerce support would be a **separate feature** from the current Forter payload behaviour above.
+How it runs:
+
+1. The customer enters their card in Fat Zebra's hosted form, which returns a card token.
+2. The browser asks the store for a short-lived OAuth token and an HMAC of the card token (`wc-ajax=artspay_3ds_prepare`), then calls fatzebra.js `verifyCard` with `card_on_file`.
+3. On `fz.sca.success` the result is posted with the checkout. The plugin keeps the documented fields (`sli`, `cavv`, `xid`, `ver`, `par`, `directory_server_txn_id`, `threeds_version`) and sends them under `extra` on the purchase.
+4. On `fz.sca.error` the payment is blocked and the customer can retry or use another card.
+
+Policy, matching ArtsPay's hosted checkout:
+
+- Any result fatzebra.js reports as success is accepted, including **attempted** and **not enrolled** (`ver: N`). The order note says whether liability shifted.
+- The server requires a 3DS result for hosted card payments while 3D Secure is on, so a request that skips the browser step is refused.
+- Deferred payments and $0 orders skip 3D Secure. Subscription renewals are merchant-initiated and are not verified.
+- The result is stored on the order as `_artspay_3ds_result`.
+
+3D Secure and Forter are independent: both can run on the same charge.

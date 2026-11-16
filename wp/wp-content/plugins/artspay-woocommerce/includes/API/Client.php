@@ -51,16 +51,17 @@ class Client {
 	 * @param array  $payload     Request payload - array will be JSON encoded, string used as-is.
 	 * @param array  $credentials API credentials (username, api_token).
 	 * @param bool   $is_sandbox  Whether to use sandbox URL.
+	 * @param string $method      HTTP method. GET sends no body.
 	 *
 	 * @return array|WP_Error
 	 */
-	public function make_request( string $endpoint, array $payload, array $credentials, bool $is_sandbox ): array|WP_Error {
+	public function make_request( string $endpoint, array $payload, array $credentials, bool $is_sandbox, string $method = 'POST' ): array|WP_Error {
 		$base_url = $is_sandbox ? $this->sandbox_url : $this->live_url;
 		$url      = str_replace( 'purchases', $endpoint, $base_url );
 
 		$args = array(
-			'method'  => 'POST',
-			'body'    => wp_json_encode( $payload ),
+			'method'  => $method,
+			'body'    => 'GET' === $method ? null : wp_json_encode( $payload ),
 			'headers' => array(
 				'Authorization' => 'Basic ' . base64_encode( $credentials['username'] . ':' . $credentials['api_token'] ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions
 				'X-Test-Mode'   => $is_sandbox,
@@ -350,6 +351,31 @@ class Client {
 	 */
 	public function tokenize( array|string $payload, array $credentials, bool $is_sandbox ): array|WP_Error {
 		$result = $this->make_request( 'credit_cards', $payload, $credentials, $is_sandbox );
+
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return array(
+			'card_token'     => $result['response']->token,
+			'card_number'    => $result['response']->card_number,
+			'card_expiry'    => $result['response']->card_expiry,
+			'card_holder'    => $result['response']->card_holder,
+			'transaction_id' => $result['response']->token,
+		);
+	}
+
+	/**
+	 * Look up a stored card by its token.
+	 *
+	 * @param string $card_token  Card token.
+	 * @param array  $credentials API credentials.
+	 * @param bool   $is_sandbox  Whether to use sandbox URL.
+	 *
+	 * @return array|WP_Error Same shape as tokenize().
+	 */
+	public function get_card( string $card_token, array $credentials, bool $is_sandbox ): array|WP_Error {
+		$result = $this->make_request( 'credit_cards/' . rawurlencode( $card_token ), array(), $credentials, $is_sandbox, 'GET' );
 
 		if ( is_wp_error( $result ) ) {
 			return $result;

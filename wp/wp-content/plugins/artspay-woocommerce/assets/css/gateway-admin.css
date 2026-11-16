@@ -384,3 +384,34 @@
 	display: none !important;
 }
 
+
+/* Fraud & security list */
+.artspay-security-icon .dashicons {
+	width: 22px;
+	height: 22px;
+	font-size: 22px;
+	color: #1d2327;
+}
+
+.artspay-status {
+	display: inline-block;
+	margin-left: 6px;
+	padding: 1px 8px;
+	border-radius: 10px;
+	font-size: 11px;
+	font-weight: 500;
+	line-height: 18px;
+	vertical-align: 1px;
+	background: #f0f0f1;
+	color: #50575e;
+}
+
+.artspay-status--on {
+	background: #edfaef;
+	color: #00650f;
+}
+
+.artspay-status--setup {
+	background: #fcf0f1;
+	color: #b32d2e;
+}

@@ -66,6 +66,14 @@ final class Debug_Logger {
 				$out[ $key ] = '[redacted]';
 			}
 		}
+		// 3DS result: keep the outcome fields readable, hide the cryptograms.
+		if ( isset( $out['extra'] ) && is_array( $out['extra'] ) ) {
+			foreach ( array( 'cavv', 'xid' ) as $extra_key ) {
+				if ( isset( $out['extra'][ $extra_key ] ) ) {
+					$out['extra'][ $extra_key ] = '[redacted]';
+				}
+			}
+		}
 		if ( isset( $out['wallet'] ) && is_array( $out['wallet'] ) && isset( $out['wallet']['token'] ) ) {
 			$out['wallet']['token'] = '[redacted]';
 		}

@@ -208,19 +208,6 @@
         window.console.warn('ArtsPay Google Pay: autofill failed', e);
       }
 
-      var $host = $(cfg.selectors && cfg.selectors.expressHostCheckout ? cfg.selectors.expressHostCheckout : '.artspay-express-checkout--checkout').first();
-      if ($host.length && str) {
-        $host.find('.artspay-googlepay-postauth').remove();
-        $host.append(
-          '<div class="woocommerce-info artspay-googlepay-postauth" role="status">' + str + '</div>'
-        );
-      }
-
-      var $billing = $('#customer_details, #billing_first_name').first();
-      if ($billing.length) {
-        $('html, body').animate({ scrollTop: $billing.offset().top - 60 }, 350);
-      }
-
       var $form = $('form.checkout');
       var $placeOrder = $('#place_order');
       if ($form.length && $placeOrder.length) {
@@ -242,7 +229,22 @@
           window.setTimeout(function () {
             $placeOrder.trigger('click');
           }, 150);
+          return;
         }
+      }
+
+      // The order can't submit itself, so tell the customer what's left to do.
+      var $host = $(cfg.selectors && cfg.selectors.expressHostCheckout ? cfg.selectors.expressHostCheckout : '.artspay-express-checkout--checkout').first();
+      if ($host.length && str) {
+        $host.find('.artspay-googlepay-postauth').remove();
+        $host.append(
+          '<div class="woocommerce-info artspay-googlepay-postauth" role="status">' + str + '</div>'
+        );
+      }
+
+      var $billing = $('#customer_details, #billing_first_name').first();
+      if ($billing.length) {
+        $('html, body').animate({ scrollTop: $billing.offset().top - 60 }, 350);
       }
     }
   }
