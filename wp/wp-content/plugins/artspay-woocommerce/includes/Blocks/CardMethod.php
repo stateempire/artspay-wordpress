@@ -66,7 +66,7 @@ final class CardMethod extends AbstractPaymentMethodType {
 	 */
 	public function get_payment_method_script_handles(): array {
 		$gateway = $this->gateway();
-		$deps    = array( 'wc-blocks-registry', 'wc-settings', 'wp-element', 'wp-data', 'wp-html-entities', 'artspay-fatzebra' );
+		$deps    = array( 'wc-blocks-registry', 'wc-settings', 'wp-element', 'wp-data', 'wp-html-entities', 'wp-hooks', 'wp-i18n', 'artspay-fatzebra' );
 
 		CreditCardGateway::register_hosted_card_assets();
 		wp_enqueue_style( 'artspay-hosted-card' );
@@ -136,6 +136,7 @@ final class CardMethod extends AbstractPaymentMethodType {
 			'googlePay'     => $gateway->get_express_google_pay() ? $gateway->get_express_google_pay()->get_blocks_config() : null,
 			'applePay'      => $gateway->get_express_apple_pay() ? $gateway->get_express_apple_pay()->get_blocks_config() : null,
 			'strings'       => array(
+				'expressDivider' => _x( 'Or', 'divider between express and card payment', 'artspay' ),
 				'cardNumber'     => __( 'Card number', 'artspay' ),
 				'expiry'         => __( 'Expiry (MM / YY)', 'artspay' ),
 				'cvc'            => __( 'Card code (CVC)', 'artspay' ),

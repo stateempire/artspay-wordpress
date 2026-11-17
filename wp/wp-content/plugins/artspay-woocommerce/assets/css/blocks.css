@@ -67,6 +67,29 @@
 	display: block;
 }
 
+/* Express checkout on the block Checkout: a plain "Express Checkout" title, without the box. */
+body .wc-block-components-express-payment--checkout .wc-block-components-express-payment__title-container {
+	position: static;
+	margin-bottom: 12px;
+}
+
+body .wc-block-components-express-payment--checkout .wc-block-components-express-payment__title-container::before,
+body .wc-block-components-express-payment--checkout .wc-block-components-express-payment__title-container::after {
+	display: none;
+}
+
+body .wc-block-components-express-payment--checkout .wc-block-components-express-payment__title {
+	padding: 0;
+	transform: none;
+}
+
+body .wc-block-components-express-payment--checkout .wc-block-components-express-payment__content {
+	margin-top: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+}
+
 /* The hosted form's Pay now button starts payment until a card is saved. */
 body.artspay-hosted-card-pending .wc-block-components-checkout-place-order-button {
 	display: none;

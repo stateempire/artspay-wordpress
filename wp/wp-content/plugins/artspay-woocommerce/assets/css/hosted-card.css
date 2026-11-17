@@ -12,8 +12,7 @@
 	background: transparent;
 }
 
-.artspay-hosted-card__loading,
-.artspay-hosted-card__note {
+.artspay-hosted-card__loading {
 	margin: 8px 0 0;
 	font-size: 0.875em;
 	opacity: 0.75;

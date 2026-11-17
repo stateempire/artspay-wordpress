@@ -6,6 +6,10 @@
 * Fix - Payment errors (such as a decline) now show their reason on the block checkout instead of a general error.
 * Update - Captcha and wallet tokens are read from the payment data WooCommerce passes to the gateway, so they work with both checkouts.
 * Update - Apple Pay setup now points to the ArtsPay Dashboard (Settings → Wallets → Add domain) to register the store's domain, and links the verification file for the store's current mode only. Registering from the plugin is still available for merchants without Dashboard access.
+* Update - The secure hosted card form now fills the width of the payment box and lines up on the left, with expiry date and security code side by side. Fat Zebra loads its stylesheet from the plugin on HTTPS stores (ArtsPay's standard stylesheet otherwise); the `artspay_hosted_card_css_url` filter still overrides it.
+* Update - Cloudflare Turnstile stays hidden unless Cloudflare needs the customer to do something.
+* Update - Block checkout: the express payment section has a plain "Express Checkout" title without the surrounding box, and the divider below it reads "Or".
+* Remove - The "Card details are entered securely with Fat Zebra" line under the hosted card form.
 * Remove - The rule from 3.1.3 that rejected card payments through the Store API. The block checkout uses that route; attempt limits and captcha still apply to it.
 * Dev - Hosted form and 3D Secure code shared by both checkouts (`artspay-fatzebra.js`). Block checkout browser tests in `tests/e2e`.
 

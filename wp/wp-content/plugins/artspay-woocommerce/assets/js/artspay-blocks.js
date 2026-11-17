@@ -31,6 +31,13 @@
     return;
   }
 
+  // Shorten WooCommerce's divider under the express buttons from "Or continue below" to "Or".
+  if (window.wp.hooks) {
+    window.wp.hooks.addFilter('i18n.gettext_woocommerce', 'artspay/express-divider', function (translation, text) {
+      return text === 'Or continue below' ? strings.expressDivider || 'Or' : translation;
+    });
+  }
+
   // When a wallet payment started submitting. The card method stays mounted underneath, so its
   // payment setup must step aside rather than ask for a card. Cleared when the checkout finishes;
   // the time limit covers a wallet submit stopped by checkout validation, which fires neither.
@@ -85,6 +92,8 @@
           clearInterval(timer);
           widget.current = window.turnstile.render(ref.current, {
             sitekey: cfg.siteKey,
+            // Stay hidden unless Cloudflare needs the customer to do something.
+            appearance: 'interaction-only',
             callback: function (t) { token.current = t; },
             'expired-callback': function () { token.current = ''; }
           });
@@ -282,8 +291,7 @@
             { className: 'artspay-hosted-card__frame', ref: frame },
             h('p', { className: 'artspay-hosted-card__loading' }, cfg.strings.loading)
           ),
-      error ? h('p', { className: 'artspay-hosted-card__error', role: 'alert' }, error) : null,
-      h('p', { className: 'artspay-hosted-card__note' }, cfg.strings.note)
+      error ? h('p', { className: 'artspay-hosted-card__error', role: 'alert' }, error) : null
     );
 
     return { getData: getData, onFail: onFail, node: node };

@@ -137,7 +137,7 @@ trait HostedCard {
 		 *
 		 * @param string $css_url HTTPS stylesheet URL.
 		 */
-		$css_url = (string) apply_filters( 'artspay_hosted_card_css_url', 'https://cdn.artspay.com/vendor/v2/fatzebra.css' );
+		$css_url = (string) apply_filters( 'artspay_hosted_card_css_url', $this->get_default_hosted_form_css_url() );
 		if ( '' !== $css_url ) {
 			$query['css']           = $css_url;
 			$query['css_signature'] = hash_hmac( 'md5', $css_url, $secret );
@@ -153,6 +153,22 @@ trait HostedCard {
 		);
 
 		return $this->get_fatzebra_hosts()['paynow'] . $path . '?' . http_build_query( $query, '', '&', PHP_QUERY_RFC3986 );
+	}
+
+	/**
+	 * Stylesheet for the hosted card form. Fat Zebra fetches it from its own servers, so the
+	 * plugin's copy (full width, aligned left) is used only when the store is on HTTPS. Otherwise
+	 * ArtsPay's standard style from the CDN.
+	 *
+	 * @return string
+	 */
+	private function get_default_hosted_form_css_url(): string {
+		$url = ARTSPAY_PLUGIN_URL . 'assets/css/hosted-form.css';
+		if ( 0 !== strpos( $url, 'https://' ) ) {
+			return 'https://cdn.artspay.com/vendor/v2/fatzebra.css';
+		}
+
+		return add_query_arg( 'ver', ARTSPAY_PLUGIN_VERSION, $url );
 	}
 
 	/**
@@ -378,7 +394,6 @@ trait HostedCard {
 		echo '<span class="artspay-hosted-card__saved-label"></span> ';
 		echo '<button type="button" class="artspay-hosted-card__change button-link">' . esc_html__( 'Use a different card', 'artspay' ) . '</button>';
 		echo '</div>';
-		echo '<p class="artspay-hosted-card__note">' . esc_html__( 'Card details are entered securely with Fat Zebra and never reach this store.', 'artspay' ) . '</p>';
 		echo '<input type="hidden" name="artspay-card-token" class="artspay-hosted-card__token" />';
 		echo '<input type="hidden" name="artspay-3ds" class="artspay-hosted-card__3ds" />';
 		echo '</div>';
@@ -408,7 +423,6 @@ trait HostedCard {
 				'savedFallback' => __( 'Card saved', 'artspay' ),
 				'change'        => __( 'Use a different card', 'artspay' ),
 				'loading'       => __( 'Loading secure card form…', 'artspay' ),
-				'note'          => __( 'Card details are entered securely with Fat Zebra and never reach this store.', 'artspay' ),
 				'enterCard'     => __( 'Enter your card details in the secure card form, then press Pay now.', 'artspay' ),
 				'formError'     => __( 'The secure card form could not load. Refresh the page and try again.', 'artspay' ),
 				'verifyError'   => __( 'We couldn\'t verify your card with your bank. Try again or use a different card.', 'artspay' ),

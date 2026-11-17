@@ -45,7 +45,7 @@ Open **WooCommerce → Settings → Payments → ArtsPay** (or **ArtsPay Credit 
 ### Card form
 
 - **On-site card form** (default): card fields sit in the checkout and post to your server, which sends them to Fat Zebra.
-- **Secure hosted form**: Fat Zebra's hosted payments page loads inside the checkout in tokenize-only mode. The customer presses **Pay now** in that form, Fat Zebra returns a card token, and the plugin charges the token. Card numbers never reach your server (PCI SAQ A). Needs the **Gateway Shared Secret**. WooCommerce's **Place order** button stays hidden until a card has been entered. The `artspay_hosted_card_css_url` filter changes the stylesheet loaded into the form.
+- **Secure hosted form**: Fat Zebra's hosted payments page loads inside the checkout in tokenize-only mode. The customer presses **Pay now** in that form, Fat Zebra returns a card token, and the plugin charges the token. Card numbers never reach your server (PCI SAQ A). Needs the **Gateway Shared Secret**. WooCommerce's **Place order** button stays hidden until a card has been entered. The form's stylesheet (`assets/css/hosted-form.css`, full width and aligned left) is fetched by Fat Zebra from the store, so it's used on HTTPS stores only; other stores get ArtsPay's standard stylesheet from the CDN. The `artspay_hosted_card_css_url` filter changes it.
 
 Subscriptions, deferred payments, Forter, captcha and attempt limits work the same with either form, because the plugin still makes the charge.
 
@@ -153,6 +153,7 @@ assets/js/
 assets/css/
   blocks.css
   hosted-card.css
+  hosted-form.css            # Loaded inside Fat Zebra's hosted form
   express-googlepay.css
 ```
 

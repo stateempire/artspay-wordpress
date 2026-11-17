@@ -147,6 +147,8 @@ class ArtsPayCaptcha {
     try {
       this.widgetState.widgetId = turnstile.render(container, {
         sitekey: this.siteKey,
+        // Stay hidden unless Cloudflare needs the customer to do something.
+        appearance: 'interaction-only',
         callback: (token) => this.setToken(token),
         'expired-callback': () => this.handleTurnstileExpired(),
         'error-callback': (error) => this.handleTurnstileError(error)

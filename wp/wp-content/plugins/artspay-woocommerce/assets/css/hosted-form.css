@@ -1,0 +1,256 @@
+/*
+ * Stylesheet for Fat Zebra's hosted card form when it sits inside a WooCommerce checkout.
+ * Fat Zebra fetches this file from the store and serves it into the form (see the
+ * artspay_hosted_card_css_url filter). The first part is ArtsPay's standard form style
+ * (cdn.artspay.com/vendor/v2/fatzebra.css). The last part fits the form to the checkout.
+ */
+
+form {
+  margin: 0;
+}
+
+.offset4 {
+  padding: 0 !important;
+}
+
+.alert {
+  color: #dd2828 !important;
+  background-color: #f7f7f7 !important;
+
+  border-width: 0px !important;
+  border-color: rgb(209 213 219 / 1);
+  border-style: none;
+  border-radius: 0.375rem;
+
+  padding: 12px 18px !important;
+}
+
+.alert ul {
+  margin: 0 0 0 0 !important;
+  list-style: none !important;
+}
+
+#card {
+  padding: 0 0;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+#card label {
+  text-transform: lowercase;
+  display: block;
+  margin-bottom: 4px;
+
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 400 !important;
+  color: rgb(107 114 128 / 1) !important;
+}
+
+#card label:first-letter {
+  text-transform: uppercase;
+}
+
+#card .control-group {
+  margin-bottom: 0 !important;
+}
+
+#card .controls {
+  position: relative;
+  margin-bottom: 15px;
+}
+
+#card .surcharge-enabled {
+  margin: 0 0;
+  padding: .625rem .625rem;
+}
+
+#card label.control-label {
+  color: #000;
+}
+
+#card label.error {
+  color: #dd2828;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin: 0;
+}
+
+#card input[type='text'],
+#card input[type='tel'],
+#card input[type='password'],
+#card input[type='number'],
+#card input[type='email'] {
+  box-shadow: 0 0 #0000, 0 0 #0000, 0 1px 2px 0 rgb(0 0 0 / 0.05);
+
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+
+  border-width: 1px;
+  border-color: rgb(209 213 219 / 1);
+  border-style: solid;
+  border-radius: 0.375rem;
+
+  width: 100%;
+  height: auto;
+
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+
+  margin: 0;
+
+  color: #000;
+  background-color: #ffffff;
+
+  transition: box-shadow 0.33s cubic-bezier(0.230, 1.000, 0.320, 1.000);
+}
+
+#card .card-icon {
+  background-position: right 6px center !important;
+  background-size: 40px !important;
+}
+
+#card input[type='text']:focus,
+#card input[type='tel']:focus,
+#card input[type='password']:focus,
+#card input[type='number']:focus,
+#card input[type='email']:focus {
+  z-index: 2;
+  outline: none;
+
+  box-shadow: 0 0 #0000, 0 0 #0000, 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+#card input[type='text'].error,
+#card input[type='tel'].error,
+#card input[type='password'].error,
+#card input[type='number'].error,
+#card input[type='email'].error {
+  border-color: #dd2828 !important;
+}
+
+#card input[type='text'].error:focus,
+#card input[type='tel'].error:focus,
+#card input[type='password'].error:focus,
+#card input[type='number'].error:focus,
+#card input[type='email'].error:focus {
+  border-color: rgba(231 34 76 / 80%) !important;
+  box-shadow: 0 0 #0000, 0 0 #0000, 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+#card button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+
+  user-select: none;
+
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 6px;
+  padding-top: 1.00rem;
+  padding-bottom: 1.00rem;
+  padding-left: 2rem;
+  padding-right: 2rem;
+
+  font-size: 16px;
+
+  color: #fff;
+  background-color: #000;
+  border-color: #000;
+  border-radius: 6px;
+
+  text-shadow: none;
+  background-image: none;
+
+  box-shadow: rgba(50, 50, 93, 0.1) 0px 0px 0px 1px inset, rgba(50, 50, 93, 0.1) 0px 2px 5px 0px, rgba(0, 0, 0, 0.07) 0px 1px 1px 0px !important;
+}
+
+#card button i,
+#card button span {
+  margin-right: 8px;
+}
+
+#card #payment_request_expiry_date,
+#card #security-code .pull-right {
+  width: 100%;
+}
+
+#card #expiry-date {
+  padding-right: 10px;
+}
+
+#card #security-code {
+  padding-left: 10px;
+}
+
+#payment-result h3 {
+  width: 80%;
+  font-size: 18px;
+  line-height: 1.5;
+  margin: 0;
+  margin-bottom: 20px;
+  text-align: left !important;
+}
+
+#payment-result ul {
+  margin: 0;
+}
+
+#payment-result .spinner {
+  transform: scale(0.25);
+}
+
+/* ------------------------------------------------------------------------
+ * Checkout fit: use the full width of the payment box, aligned left, with
+ * expiry date and security code side by side.
+ * ---------------------------------------------------------------------- */
+
+body {
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+.container,
+.row-fluid {
+  width: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.row-fluid [class*='span'] {
+  float: none !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 1px !important;
+  left: auto !important;
+  right: auto !important;
+  box-sizing: border-box;
+}
+
+/* Fat Zebra fixes the form at 17.5rem (280px). */
+.form-vertical {
+  width: 100% !important;
+}
+
+#card .payment_form-mh {
+  display: flex;
+  gap: 12px;
+}
+
+#card .payment_form-mh .pull-left,
+#card .payment_form-mh .pull-right {
+  float: none;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0;
+}
+
+#card #security-code {
+  padding-left: 0;
+}
