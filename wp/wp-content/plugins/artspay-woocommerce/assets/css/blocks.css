@@ -67,10 +67,12 @@
 	display: block;
 }
 
-/* Express checkout on the block Checkout: a plain "Express Checkout" title, without the box. */
+/* Express checkout on the block Checkout: a plain, centred "Express Checkout" title, without the box. */
 body .wc-block-components-express-payment--checkout .wc-block-components-express-payment__title-container {
 	position: static;
+	justify-content: center;
 	margin-bottom: 12px;
+	text-align: center;
 }
 
 body .wc-block-components-express-payment--checkout .wc-block-components-express-payment__title-container::before,
