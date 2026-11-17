@@ -61,9 +61,10 @@ Yes. Turn them on under **Express checkouts** in the ArtsPay settings. The butto
 = 3.3.0 =
 * Add - Block Cart and Checkout support. ArtsPay now appears in the Checkout block with the secure hosted card form (including 3D Secure) or the on-site card form, and captcha. Stores no longer need to switch to the classic checkout.
 * Add - Google Pay and Apple Pay on the block Cart and Checkout, as express payment buttons. They replace the earlier buttons on block pages, which filled in classic checkout fields the block checkout never sent.
+* Fix - Google Pay and Apple Pay on the block Cart and Checkout failed with "Captcha verification failed" when captcha was on. Wallet payments now skip the captcha (the attempt limits still apply), and a failed wallet payment on the Cart block now shows its reason under the buttons.
 * Fix - Payment errors (such as a decline) now show their reason on the block checkout instead of a general error.
 * Update - Captcha and wallet tokens are read from the payment data WooCommerce passes to the gateway, so they work with both checkouts.
-* Update - Apple Pay setup now points to the ArtsPay Dashboard (Settings → Wallets → Add domain) to register the store's domain, and links the verification file for the store's current mode only. Registering from the plugin is still available for merchants without Dashboard access.
+* Update - Apple Pay setup now points to the ArtsPay Dashboard (Settings → Wallets → Add domain) to register the store's domain, and links the verification file for the store's current mode only. Stores in sandbox mode register from the plugin, since the Dashboard registers with the live Fat Zebra merchant. Registering from the plugin is still available for live merchants without Dashboard access.
 * Update - The secure hosted card form now fills the width of the payment box and lines up on the left, with expiry date and security code side by side. Fat Zebra loads its stylesheet from the plugin on HTTPS stores (ArtsPay's standard stylesheet otherwise); the `artspay_hosted_card_css_url` filter still overrides it.
 * Update - Cloudflare Turnstile stays hidden unless Cloudflare needs the customer to do something.
 * Update - Block checkout: the express payment section has a plain, centred "Express Checkout" title without the surrounding box, and the divider below it reads "Or".

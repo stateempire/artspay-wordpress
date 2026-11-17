@@ -463,11 +463,17 @@
       }
       // A declined wallet payment leaves WooCommerce in express mode, with the other payment
       // options hidden. onClose puts the checkout back so the customer can try again.
-      function failed() {
+      function failed(result) {
         var ours = !!tokenRef.current;
         clear();
         if (ours) {
           latest.current.onClose();
+          // The Checkout block shows the reason in its notices. The Cart block has nowhere to
+          // show it, so put it under the express buttons.
+          var message = result && result.processingResponse && result.processingResponse.message;
+          if (!document.querySelector('.wc-block-checkout')) {
+            latest.current.setExpressPaymentError(message || strings.walletError);
+          }
         }
         return NOTHING;
       }

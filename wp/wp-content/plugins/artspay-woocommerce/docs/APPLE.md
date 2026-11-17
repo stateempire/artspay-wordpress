@@ -40,7 +40,7 @@ If verification fails, use `curl -i` against the exact verification URL and conf
 
 ## After the file is reachable
 
-Register the domain in the **ArtsPay Dashboard**: **Settings → Wallets → Apple Pay → Add domain**. Use `dashboard.artspay.com` for a live store and `dashboard-beta.artspay.com` for a store in sandbox mode, so the registration matches the store's Fat Zebra environment. If the domain shows Pending or Failed, press **Retry**: the Dashboard checks the file, then registers the domain with Fat Zebra. It's ready when it shows **Verified**.
+Register the domain in the **ArtsPay Dashboard**: **Settings → Wallets → Apple Pay → Add domain**. The Dashboard registers domains with the live Fat Zebra merchant, so this step is for live stores. A store in sandbox mode registers from the plugin instead: its Apple Pay steps show a **Register domain** button that uses the store's sandbox credentials. If the domain shows Pending or Failed, press **Retry**: the Dashboard checks the file, then registers the domain with Fat Zebra. It's ready when it shows **Verified**.
 
 The ArtsPay account must use the same Fat Zebra merchant as the store. Apple Pay checks the registration against the merchant whose credentials the store uses.
 

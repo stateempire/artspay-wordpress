@@ -1357,13 +1357,11 @@ class CreditCardGateway extends WC_Payment_Gateway_CC {
 			? 'https://paynow.pmnts-sandbox.io/apple_pay/domain_verification/sandbox.txt'
 			: 'https://paynow.pmnts.io/apple_pay/domain_verification/production.txt';
 		/**
-		 * Filter the ArtsPay Dashboard URL in the Apple Pay steps. Sandbox stores use the beta Dashboard,
-		 * which registers domains with the Fat Zebra sandbox.
+		 * Filter the ArtsPay Dashboard URL in the Apple Pay steps (live stores only).
 		 *
-		 * @param string $url     Dashboard URL.
-		 * @param bool   $sandbox Whether the store is in sandbox mode.
+		 * @param string $url Dashboard URL.
 		 */
-		$dashboard_url = (string) apply_filters( 'artspay_dashboard_url', $sandbox ? 'https://dashboard-beta.artspay.com' : 'https://dashboard.artspay.com', $sandbox );
+		$dashboard_url = (string) apply_filters( 'artspay_dashboard_url', 'https://dashboard.artspay.com' );
 
 		$https_ok     = ApplePayAdmin::is_home_https();
 		$verified_url = ApplePayAdmin::is_association_file_ok_for_status( $this );
@@ -1414,9 +1412,21 @@ class CreditCardGateway extends WC_Payment_Gateway_CC {
 		echo '<a href="' . esc_url( $file_url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $sandbox ? __( 'Download the sandbox file', 'artspay' ) : __( 'Download the production file', 'artspay' ) ) . '</a>';
 		echo '</li>';
 
-		echo '<li>' . esc_html__( 'Check the file is in place.', 'artspay' ) . ' ';
-		echo '<button type="submit" form="artspay-applepay-check-form" class="button button-link">' . esc_html__( 'Run verification check', 'artspay' ) . '</button>';
+		echo '<li>' . esc_html__( 'Check the file is in place.', 'artspay' );
+		echo '<br /><button type="submit" form="artspay-applepay-check-form" class="button" style="margin-top:6px;">' . esc_html__( 'Run verification check', 'artspay' ) . '</button>';
 		echo '</li>';
+
+		// The ArtsPay Dashboard registers domains with the live Fat Zebra merchant, so a sandbox
+		// store registers with its own sandbox credentials instead.
+		if ( $sandbox ) {
+			echo '<li>' . esc_html__( 'Register your domain with Fat Zebra\'s sandbox, using this store\'s gateway credentials.', 'artspay' );
+			echo '<br /><button type="submit" form="artspay-applepay-register-form" class="button" style="margin-top:6px;">' . esc_html__( 'Register domain', 'artspay' ) . '</button>';
+			echo '<br /><span class="description">' . esc_html__( 'When the store goes live, register it again in the ArtsPay Dashboard. These steps will show how.', 'artspay' ) . '</span>';
+			echo '</li>';
+			echo '<li>' . esc_html__( 'Turn on “Enable Apple Pay” above.', 'artspay' ) . '</li>';
+			echo '</ol>';
+			return;
+		}
 
 		echo '<li>';
 		echo wp_kses(
@@ -1539,7 +1549,13 @@ class CreditCardGateway extends WC_Payment_Gateway_CC {
 			return $this->payment_failed();
 		}
 
-		if ( $this->is_captcha_enabled() ) {
+		// Wallet payments skip the captcha. The express buttons on the block Cart and Checkout sit
+		// outside the card form, so they have no captcha to send. Card testing isn't possible with
+		// them either: Google and Apple sign each token for a real account, Fat Zebra rejects
+		// anything else, and the attempt limits above still apply.
+		$is_wallet_payment = '' !== $this->posted_field( 'googlepay-token' ) || '' !== $this->posted_field( 'applepay-token' );
+
+		if ( $this->is_captcha_enabled() && ! $is_wallet_payment ) {
 			$captcha_token = $this->posted_field( 'captcha_token' );
 
 			if ( empty( $captcha_token ) ) {

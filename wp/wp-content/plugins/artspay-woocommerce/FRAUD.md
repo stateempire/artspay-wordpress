@@ -41,13 +41,13 @@ The per order limit doesn't depend on the IP address, so it applies even if an a
 
 ### Store API
 
-Card payments sent to WooCommerce's Store API checkout endpoint (`/wp-json/wc/store/v1/checkout`) are rejected. The plugin only supports the classic checkout, so a real customer never uses this route. Other payment methods aren't affected.
+Since 3.3.0 the block Cart and Checkout pay through WooCommerce's Store API checkout endpoint (`/wp-json/wc/store/v1/checkout`), so it's no longer blocked. The attempt limits and captcha apply to it the same as to the classic checkout.
 
 ### What these don't do
 
 Limits slow an attack down but don't stop one that keeps changing order, session and IP. For that, also use:
 
-- The captcha (**WooCommerce → Settings → Payments → ArtsPay**)
+- The captcha (**WooCommerce → Settings → Payments → ArtsPay**). It applies to card payments. Google Pay and Apple Pay skip it: their express buttons sit outside the card form, and each wallet token is signed by Google or Apple for a real account, so they can't be used to test card numbers.
 - Rate limit rules at your firewall or CDN for `?wc-ajax=checkout`, `/checkout/order-pay/` and `/wp-json/wc/store/v1/checkout`
 - Forter, described below
 
