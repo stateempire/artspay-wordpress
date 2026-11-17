@@ -571,7 +571,8 @@
 
       function pay() {
         var p = latest.current;
-        var merchantInfo = { merchantName: gp.googleMerchantName, merchantOrigin: window.location.origin };
+        // No merchantOrigin: Google uses it for platforms paying on behalf of other merchants.
+        var merchantInfo = { merchantName: gp.googleMerchantName };
         if (gp.googleMerchantId) {
           merchantInfo.merchantId = gp.googleMerchantId;
         }
@@ -663,9 +664,29 @@
 
     var ApplePayButton = function (props) {
       var token = useRef('');
+      var button = useRef(null);
       var latest = useRef(props);
       latest.current = props;
       useWalletSetup(props, 'applepay-token', token);
+
+      // React doesn't pass onClick through to custom elements such as <apple-pay-button>, so
+      // listen for the click directly. The listener calls pay() inside the click, as Apple requires.
+      var payRef = useRef(null);
+      useEffect(function () {
+        var node = button.current;
+        if (!node) {
+          return undefined;
+        }
+        function onClick() {
+          if (payRef.current) {
+            payRef.current();
+          }
+        }
+        node.addEventListener('click', onClick);
+        return function () {
+          node.removeEventListener('click', onClick);
+        };
+      }, []);
 
       function pay() {
         var p = latest.current;
@@ -723,15 +744,16 @@
         p.onClick();
         session.begin();
       }
+      payRef.current = pay;
 
       return h(
         'div',
         { className: 'artspay-blocks-wallet artspay-blocks-wallet--applepay' },
         h('apple-pay-button', {
+          ref: button,
           buttonstyle: ap.buttonStyle,
           type: ap.buttonType,
-          locale: ap.locale,
-          onClick: pay
+          locale: ap.locale
         })
       );
     };

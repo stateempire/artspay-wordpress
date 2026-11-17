@@ -75,8 +75,8 @@
       },
       merchantInfo: (function () {
         var mi = {
-          merchantName: cfg.googleMerchantName,
-          merchantOrigin: typeof window !== 'undefined' ? window.location.origin : ''
+          // No merchantOrigin: Google uses it for platforms paying on behalf of other merchants.
+          merchantName: cfg.googleMerchantName
         };
         if (cfg.googleMerchantId && String(cfg.googleMerchantId).trim() !== '') {
           mi.merchantId = String(cfg.googleMerchantId).trim();

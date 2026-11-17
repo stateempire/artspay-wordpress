@@ -60,6 +60,16 @@
 	min-height: 48px;
 }
 
+/* Google's button is 40px by default; match Apple Pay's 48px. */
+.artspay-blocks-wallet--googlepay {
+	height: 48px;
+}
+
+.artspay-blocks-wallet--googlepay > div,
+.artspay-blocks-wallet--googlepay button {
+	height: 100%;
+}
+
 .artspay-blocks-wallet apple-pay-button {
 	--apple-pay-button-width: 100%;
 	--apple-pay-button-height: 48px;
