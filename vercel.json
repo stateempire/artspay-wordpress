@@ -12,6 +12,14 @@
       "dest": "/wp/$1.$2"
     },
     {
+      "src": "^/\\.well-known/apple-developer-merchantid-domain-association$",
+      "headers": {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "max-age=300"
+      },
+      "dest": "/wp/.well-known/apple-developer-merchantid-domain-association"
+    },
+    {
       "src": "/(.*)",
       "dest": "/api/vercel.js"
     }

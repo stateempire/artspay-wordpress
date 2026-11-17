@@ -20,7 +20,7 @@ The WooCommerce plugin treats the **WordPress “Site Address (URL)” host** as
 
 ## Sandbox vs production file
 
-Fat Zebra publishes two different verification files. You must upload the file that matches the **active gateway mode** (sandbox vs production):
+Fat Zebra publishes two different verification files, and a domain can serve only one of them. Upload the one for the mode you want Apple Pay to work in: sandbox while testing, production for live payments. The plugin's Apple Pay panel links both, and its check says which file the site serves and whether it matches the store's current mode. To prepare for launch while still in sandbox, swap in the production file just before switching the store live.
 
 - Sandbox: `https://paynow.pmnts-sandbox.io/apple_pay/domain_verification/sandbox.txt`
 - Production: `https://paynow.pmnts.io/apple_pay/domain_verification/production.txt`

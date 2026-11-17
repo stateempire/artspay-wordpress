@@ -1352,10 +1352,8 @@ class CreditCardGateway extends WC_Payment_Gateway_CC {
 		$canonical_host = strtolower( trim( $canonical_host ) );
 		$domain_display  = '' !== $canonical_host ? $canonical_host : __( 'your domain', 'artspay' );
 
-		$sandbox      = $this->is_sandbox_mode();
-		$file_url     = $sandbox
-			? 'https://paynow.pmnts-sandbox.io/apple_pay/domain_verification/sandbox.txt'
-			: 'https://paynow.pmnts.io/apple_pay/domain_verification/production.txt';
+		$sandbox   = $this->is_sandbox_mode();
+		$file_urls = ApplePayAdmin::get_association_file_urls();
 		/**
 		 * Filter the ArtsPay Dashboard URL in the Apple Pay steps (live stores only).
 		 *
@@ -1363,8 +1361,12 @@ class CreditCardGateway extends WC_Payment_Gateway_CC {
 		 */
 		$dashboard_url = (string) apply_filters( 'artspay_dashboard_url', 'https://dashboard.artspay.com' );
 
-		$https_ok     = ApplePayAdmin::is_home_https();
-		$verified_url = ApplePayAdmin::is_association_file_ok_for_status( $this );
+		$https_ok    = ApplePayAdmin::is_home_https();
+		$file_status = ApplePayAdmin::get_association_status( $this );
+		$mode_label  = array(
+			'sandbox'    => __( 'sandbox', 'artspay' ),
+			'production' => __( 'production', 'artspay' ),
+		);
 
 		echo '<hr />';
 		echo '<h3>' . esc_html__( 'Installing Apple Pay', 'artspay' ) . '</h3>';
@@ -1374,8 +1376,17 @@ class CreditCardGateway extends WC_Payment_Gateway_CC {
 		$this->render_apple_pay_status_icon( $https_ok );
 		echo '<span>' . esc_html__( 'HTTPS certificate available', 'artspay' ) . '</span></li>';
 		echo '<li style="display:flex;align-items:center;gap:10px;margin:8px 0;">';
-		$this->render_apple_pay_status_icon( $verified_url );
-		echo '<span>' . esc_html__( 'Apple Pay verification file found on this site', 'artspay' ) . '</span></li>';
+		$this->render_apple_pay_status_icon( $file_status['ok'] );
+		if ( '' === $file_status['matches'] ) {
+			$file_text = __( 'Apple Pay verification file found on this site', 'artspay' );
+		} elseif ( $file_status['ok'] ) {
+			/* translators: %s: sandbox or production */
+			$file_text = sprintf( __( 'Apple Pay verification file found on this site (%s)', 'artspay' ), $mode_label[ $file_status['matches'] ] );
+		} else {
+			/* translators: 1: file found (sandbox or production), 2: store mode (sandbox or production) */
+			$file_text = sprintf( __( 'This site serves the %1$s file, but the store is in %2$s mode. Apple Pay works only in the mode the file matches.', 'artspay' ), $mode_label[ $file_status['matches'] ], $mode_label[ $sandbox ? 'sandbox' : 'production' ] );
+		}
+		echo '<span>' . esc_html( $file_text ) . '</span></li>';
 		echo '</ul>';
 
 		$is_redirected = ( '' !== $result_key ) && is_array( $result );
@@ -1408,8 +1419,20 @@ class CreditCardGateway extends WC_Payment_Gateway_CC {
 		echo '<ol class="artspay-applepay-steps" style="max-width:720px;line-height:1.5;">';
 
 		echo '<li>' . esc_html__( 'Download the verification file and upload it to your site so it is served at', 'artspay' );
-		echo ' <code>/.well-known/apple-developer-merchantid-domain-association</code>. ';
-		echo '<a href="' . esc_url( $file_url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $sandbox ? __( 'Download the sandbox file', 'artspay' ) : __( 'Download the production file', 'artspay' ) ) . '</a>';
+		echo ' <code>/.well-known/apple-developer-merchantid-domain-association</code>.';
+		echo '<br />' . esc_html__( 'Use the file for the mode you want Apple Pay to work in. A site can serve only one, so swap it when you go live.', 'artspay' );
+		echo '<ul style="margin:6px 0 0 1.25em;list-style:disc;">';
+		foreach ( array( 'production', 'sandbox' ) as $file_mode ) {
+			$is_current = ( 'sandbox' === $file_mode ) === $sandbox;
+			echo '<li><a href="' . esc_url( $file_urls[ $file_mode ] ) . '" target="_blank" rel="noopener noreferrer">';
+			echo esc_html( 'production' === $file_mode ? __( 'Production file', 'artspay' ) : __( 'Sandbox file', 'artspay' ) ) . '</a>';
+			echo ' <span class="description">' . esc_html( 'production' === $file_mode ? __( 'for live payments', 'artspay' ) : __( 'for testing', 'artspay' ) );
+			if ( $is_current ) {
+				echo ' ' . esc_html__( '(this store\'s current mode)', 'artspay' );
+			}
+			echo '</span></li>';
+		}
+		echo '</ul>';
 		echo '</li>';
 
 		echo '<li>' . esc_html__( 'Check the file is in place.', 'artspay' );
@@ -1421,7 +1444,21 @@ class CreditCardGateway extends WC_Payment_Gateway_CC {
 		if ( $sandbox ) {
 			echo '<li>' . esc_html__( 'Register your domain with Fat Zebra\'s sandbox, using this store\'s gateway credentials.', 'artspay' );
 			echo '<br /><button type="submit" form="artspay-applepay-register-form" class="button" style="margin-top:6px;">' . esc_html__( 'Register domain', 'artspay' ) . '</button>';
-			echo '<br /><span class="description">' . esc_html__( 'When the store goes live, register it again in the ArtsPay Dashboard. These steps will show how.', 'artspay' ) . '</span>';
+			echo '<br /><span class="description">' . wp_kses(
+				sprintf(
+					/* translators: %s: ArtsPay Dashboard URL */
+					__( 'Before going live: upload the production file, then register the domain in the <a href="%s" target="_blank" rel="noopener noreferrer">ArtsPay Dashboard</a> under <strong>Settings → Wallets → Apple Pay → Add domain</strong>.', 'artspay' ),
+					esc_url( $dashboard_url )
+				),
+				array(
+					'a'      => array(
+						'href'   => true,
+						'target' => true,
+						'rel'    => true,
+					),
+					'strong' => array(),
+				)
+			) . '</span>';
 			echo '</li>';
 			echo '<li>' . esc_html__( 'Turn on “Enable Apple Pay” above.', 'artspay' ) . '</li>';
 			echo '</ol>';

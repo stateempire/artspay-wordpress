@@ -100,7 +100,14 @@ final class ApplePay {
 
 		self::store_result_for_current_user( $result );
 		self::set_verification_file_ok_for_current_user( ! empty( $result['ok'] ) );
-		set_transient( self::association_transient_key( $gateway ), ! empty( $result['ok'] ) ? '1' : '0', 300 );
+		set_transient(
+			self::association_transient_key( $gateway ),
+			array(
+				'ok'      => ! empty( $result['ok'] ),
+				'matches' => (string) ( $result['matches'] ?? '' ),
+			),
+			300
+		);
 		wp_safe_redirect( self::back_url( 'check' ) );
 		exit;
 	}
@@ -172,36 +179,70 @@ final class ApplePay {
 			$result['error'] = 'Looks like a generic error page.';
 		}
 
-		if ( $ok && $gateway ) {
-			$is_sandbox   = (bool) $gateway->is_sandbox_mode();
-			$expected_url = $is_sandbox
-				? 'https://paynow.pmnts-sandbox.io/apple_pay/domain_verification/sandbox.txt'
-				: 'https://paynow.pmnts.io/apple_pay/domain_verification/production.txt';
-			$expected_resp = wp_remote_get(
-				$expected_url,
-				array(
-					'timeout'     => 20,
-					'redirection' => 3,
-					'headers'     => array(
-						'User-Agent' => 'WooCommerce Plugin ' . ARTSPAY_PLUGIN_VERSION,
-					),
-				)
-			);
-			if ( ! is_wp_error( $expected_resp ) ) {
-				$expected_code = isset( $expected_resp['response']['code'] ) ? (int) $expected_resp['response']['code'] : 0;
-				$expected_body = isset( $expected_resp['body'] ) ? (string) $expected_resp['body'] : '';
-				if ( 200 === $expected_code && '' !== trim( $expected_body ) ) {
-					$result['expected_url'] = $expected_url;
-					if ( trim( $expected_body ) !== trim( $body ) ) {
-						$ok              = false;
-						$result['error'] = 'The hosted file does not match the Fat Zebra verification file for this environment (wrong file or extra whitespace).';
-					}
+		// Which Fat Zebra file the site serves. A domain can serve only one: sandbox and production differ.
+		$result['matches'] = '';
+		if ( $ok ) {
+			foreach ( self::get_association_file_urls() as $mode => $file_url ) {
+				$expected = self::get_association_file( $file_url );
+				if ( '' !== $expected && trim( $expected ) === trim( $body ) ) {
+					$result['matches'] = $mode;
+				}
+			}
+			if ( '' === $result['matches'] ) {
+				$ok              = false;
+				$result['error'] = 'The file on this site does not match Fat Zebra\'s sandbox or production file (wrong file or extra whitespace).';
+			} elseif ( $gateway ) {
+				$current = $gateway->is_sandbox_mode() ? 'sandbox' : 'production';
+				if ( $current !== $result['matches'] ) {
+					$ok              = false;
+					$result['error'] = 'sandbox' === $current
+						? 'This site serves the production file, but the store is in sandbox mode. Upload the sandbox file to test Apple Pay in sandbox.'
+						: 'This site serves the sandbox file, but the store is in live mode. Upload the production file.';
 				}
 			}
 		}
 
 		$result['ok'] = $ok;
 		return $result;
+	}
+
+	/**
+	 * Fat Zebra's Apple Pay domain association files, by mode.
+	 *
+	 * @return array{sandbox: string, production: string}
+	 */
+	public static function get_association_file_urls(): array {
+		return array(
+			'sandbox'    => 'https://paynow.pmnts-sandbox.io/apple_pay/domain_verification/sandbox.txt',
+			'production' => 'https://paynow.pmnts.io/apple_pay/domain_verification/production.txt',
+		);
+	}
+
+	/**
+	 * Contents of one of Fat Zebra's association files, cached for a day. Empty if it can't be fetched.
+	 */
+	private static function get_association_file( string $url ): string {
+		$key    = 'artspay_applepay_file_' . md5( $url );
+		$cached = get_transient( $key );
+		if ( is_string( $cached ) && '' !== $cached ) {
+			return $cached;
+		}
+		$response = wp_remote_get(
+			$url,
+			array(
+				'timeout'     => 20,
+				'redirection' => 3,
+				'headers'     => array( 'User-Agent' => 'WooCommerce Plugin ' . ARTSPAY_PLUGIN_VERSION ),
+			)
+		);
+		if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+			return '';
+		}
+		$body = (string) wp_remote_retrieve_body( $response );
+		if ( '' !== trim( $body ) ) {
+			set_transient( $key, $body, DAY_IN_SECONDS );
+		}
+		return $body;
 	}
 
 	/**
@@ -214,18 +255,34 @@ final class ApplePay {
 	}
 
 	/**
-	 * Whether the association file appears valid for status UI (transient cache or live probe).
+	 * Association file status for the settings page (cached briefly): whether it matches the store's
+	 * current mode, and which Fat Zebra file the site serves ('sandbox', 'production' or '').
+	 *
+	 * @return array{ok: bool, matches: string}
 	 */
-	public static function is_association_file_ok_for_status( ?CreditCardGateway $gateway ): bool {
-		$key     = self::association_transient_key( $gateway );
-		$cached  = get_transient( $key );
-		if ( false !== $cached ) {
-			return (string) $cached === '1';
+	public static function get_association_status( ?CreditCardGateway $gateway ): array {
+		$key    = self::association_transient_key( $gateway );
+		$cached = get_transient( $key );
+		if ( is_array( $cached ) && isset( $cached['ok'], $cached['matches'] ) ) {
+			return array(
+				'ok'      => (bool) $cached['ok'],
+				'matches' => (string) $cached['matches'],
+			);
 		}
 		$payload = self::run_association_file_check( $gateway );
-		$ok      = ! empty( $payload['ok'] );
-		set_transient( $key, $ok ? '1' : '0', 120 );
-		return $ok;
+		$status  = array(
+			'ok'      => ! empty( $payload['ok'] ),
+			'matches' => (string) ( $payload['matches'] ?? '' ),
+		);
+		set_transient( $key, $status, 120 );
+		return $status;
+	}
+
+	/**
+	 * Whether the association file matches the store's current mode.
+	 */
+	public static function is_association_file_ok_for_status( ?CreditCardGateway $gateway ): bool {
+		return self::get_association_status( $gateway )['ok'];
 	}
 
 	/**
