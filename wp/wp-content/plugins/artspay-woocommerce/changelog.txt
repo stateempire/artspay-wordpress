@@ -5,6 +5,7 @@
 * Add - Google Pay and Apple Pay on the block Cart and Checkout, as express payment buttons. They replace the earlier buttons on block pages, which filled in classic checkout fields the block checkout never sent.
 * Fix - Google Pay and Apple Pay on the block Cart and Checkout failed with "Captcha verification failed" when captcha was on. Wallet payments now skip the captcha (the attempt limits still apply), and a failed wallet payment on the Cart block now shows its reason under the buttons.
 * Fix - The Apple Pay button on the block Cart and Checkout did nothing when pressed. WordPress's React doesn't pass click handlers to Apple's button element, so the plugin now listens for the click directly.
+* Fix - Google Pay and Apple Pay on the block Cart and Checkout now wait for WooCommerce to save the wallet's address before placing the order. On slower servers the two requests could overlap, and the page could stay on the checkout after a successful payment.
 * Fix - Google Pay no longer sends `merchantOrigin`, which Google reserves for platforms paying on behalf of other merchants. Matches pay.artspay.com.
 * Update - The Google Pay button on the block Cart and Checkout is now the same height as the Apple Pay button (48px).
 * Fix - Payment errors (such as a decline) now show their reason on the block checkout instead of a general error.

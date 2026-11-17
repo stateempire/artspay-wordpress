@@ -68,6 +68,30 @@
     }
   }
 
+  // WooCommerce sends address changes to the server 1.5 seconds after they're made. Wait for that
+  // to finish before submitting a wallet payment, so it doesn't run alongside the checkout request
+  // (on a slow server it could land after the order was paid). Gives up waiting after a few seconds.
+  function waitForAddressSync() {
+    var cart = window.wp.data && window.wp.data.select('wc/store/cart');
+    if (!cart || !cart.isCustomerDataUpdating) {
+      return Promise.resolve();
+    }
+    var started = Date.now();
+    var seenUpdate = false;
+    return new Promise(function (resolve) {
+      (function check() {
+        var updating = cart.isCustomerDataUpdating();
+        seenUpdate = seenUpdate || updating;
+        var waited = Date.now() - started;
+        if ((seenUpdate && !updating) || waited > (seenUpdate ? 15000 : 2500)) {
+          resolve();
+          return;
+        }
+        setTimeout(check, 100);
+      })();
+    });
+  }
+
   function splitName(name) {
     var parts = String(name || '').trim().split(/\s+/);
     return { first: parts.shift() || '', last: parts.join(' ') };
@@ -605,7 +629,9 @@
             // Same encoding as the classic checkout: base64 of Google's token string.
             token.current = window.btoa(paymentData.paymentMethodData.tokenizationData.token);
             walletPendingSince = Date.now();
-            latest.current.onSubmit();
+            return waitForAddressSync().then(function () {
+              latest.current.onSubmit();
+            });
           })
           .catch(function (err) {
             latest.current.onClose();
@@ -733,7 +759,9 @@
           token.current = b64UrlEncode(JSON.stringify(event.payment.token || {}));
           session.completePayment(window.ApplePaySession.STATUS_SUCCESS);
           walletPendingSince = Date.now();
-          latest.current.onSubmit();
+          waitForAddressSync().then(function () {
+            latest.current.onSubmit();
+          });
         };
 
         session.oncancel = function () {
